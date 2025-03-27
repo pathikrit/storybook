@@ -1,11 +1,11 @@
 from typing import List, ClassVar
-import io
 import re
 
 import streamlit as st
 
 from pydantic import BaseModel, Field
 import litellm
+
 
 class ImageTag(BaseModel):
     id: int = Field(description="Image id starting from 1 - I will use this to replace the [[replace_image_X]] tags")
@@ -45,45 +45,44 @@ class Story(BaseModel):
                 {"role": "user", "content": prompt},
             ]
         )
-        story = Story.parse_raw(response.choices[0].message.content)
-        for image in story.images:
-            ai_image = image.generate()
-            story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
-        return story
+        return Story.parse_raw(response.choices[0].message.content)
 
     def audio(self, who: str, bedtime: bool):
-        text = re.sub(r"<.*?>", '', self.html), # strip html tags from t
-        breakpoint()
+        text = re.sub(r"<.*?>", '', self.html)  # strip html tags
         response = litellm.speech(
-            #model="gpt-4o-mini-tts",
+            # model="gpt-4o-mini-tts",
             model="openai/tts-1",
             voice="coral",
             input=text,
             optional_params={
                 "instructions": (
-                    "Female, 30s, friendly, motherly, soft, positive\n"
-                    f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}\n",
+                    "Female, 30s, friendly, motherly, soft, slow, positive\n"
+                    f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}\n"
                     "Easy and clear pronunciation for a child to understand\n"
                 )
             },
         )
-        buffer = io.BytesIO()
-        for chunk in response:
-            buffer.write(chunk)
-        buffer.seek(0)
-        return buffer.read()
+        return response.content
+
 
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
     st.title("Story Generator")
 
     who = st.text_input("Who:", "3-year old boy named Aidan")
-    prompt = st.text_input("Prompt:", "colorful bison and a monster truck")
-    bedtime = st.checkbox("Bedtime")
+    prompt = st.text_area("Prompt:", "colorful bison and a monster truck")
+
+    cols = st.columns(3)
+    bedtime = cols[0].toggle("Bedtime")
+    audio = cols[1].toggle("Audio", value=True)
+    images = cols[2].toggle("Images", value=True)
 
     if st.button("Generate Story"):
         story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
-        st.balloons()
-        st.html(story.html)
-        st.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
-
+        if audio:
+            st.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
+        if images:
+            for image in story.images:
+                ai_image = image.generate()
+                story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
+                st.html(story.html)
