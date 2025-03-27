@@ -1,5 +1,6 @@
 from typing import List, ClassVar
 import io
+import re
 
 import streamlit as st
 
@@ -22,7 +23,7 @@ class ImageTag(BaseModel):
 
 
 class Story(BaseModel):
-    text: str = Field(description="The story")
+    html: str = Field(description="The story in HTML which would go inside a div")
     images: List[ImageTag] = Field(description="The images for the story")
 
     @classmethod
@@ -30,9 +31,10 @@ class Story(BaseModel):
         system_prompt = (
             f"Generate a creative {'bedtime' if bedtime else 'and engaging'} story for {who}\n"
             "Include the child in the story also\n"
-            "Return the story as text  and also include placeholder image tags (2-3) inside the text as follows:\n"
-            f"<img src='[[replace_image_1]]' width='{ImageTag.size}' height='{ImageTag.size}'/>"
-            "Return these tags separately with a short prompt that I would use an AI to generate the images"
+            "Return the story as html (which would go inside div)\n"
+            "Also include placeholder image tags (2-3) inside the text at appropriate locations follows:\n"
+            f"<img src='[[replace_image_1]]' width='{ImageTag.size}' height='{ImageTag.size}'/>\n"
+            "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images\n"
             "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
         )
         response = litellm.completion(
@@ -46,15 +48,17 @@ class Story(BaseModel):
         story = Story.parse_raw(response.choices[0].message.content)
         for image in story.images:
             ai_image = image.generate()
-            story.text = story.text.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
+            story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
         return story
 
     def audio(self, who: str, bedtime: bool):
+        text = re.sub(r"<.*?>", '', self.html), # strip html tags from t
+        breakpoint()
         response = litellm.speech(
             #model="gpt-4o-mini-tts",
             model="openai/tts-1",
             voice="coral",
-            input=self.text,
+            input=text,
             optional_params={
                 "instructions": (
                     "Female, 30s, friendly, motherly, soft, positive\n"
@@ -69,7 +73,6 @@ class Story(BaseModel):
         buffer.seek(0)
         return buffer.read()
 
-
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
     st.title("Story Generator")
@@ -81,6 +84,6 @@ if __name__ == "__main__":
     if st.button("Generate Story"):
         story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
         st.balloons()
-        st.html(story.text)
+        st.html(story.html)
         st.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
 
