@@ -1,0 +1,21 @@
+[project]
+name = "storybook"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "pathikrit",email = "pathikritbhowmick@msn.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit (>=1.44.0,<2.0.0)",
+    "pydantic (>=2.10.6,<3.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "storybook", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
