@@ -1,10 +1,10 @@
 from typing import List, ClassVar
+import io
 
 import streamlit as st
 
 from pydantic import BaseModel, Field
-from litellm import image_generation, completion
-
+import litellm
 
 class ImageTag(BaseModel):
     id: int = Field(description="Image id starting from 1 - I will use this to replace the [[replace_image_X]] tags")
@@ -12,8 +12,8 @@ class ImageTag(BaseModel):
 
     size: ClassVar[int] = 1024
 
-    def from_llm(self):
-        return image_generation(
+    def generate(self):
+        return litellm.image_generation(
             model="dall-e-3",
             prompt=f"Generate a Studio Ghibli style story book image for the following prompt: {self.prompt}",
             response_format="url",
@@ -27,7 +27,7 @@ class Story(BaseModel):
     images: List[ImageTag] = Field(description="The images for the story")
 
     @classmethod
-    async def generate(cls, who: str, prompt: str, bedtime: bool):
+    def generate(cls, who: str, prompt: str, bedtime: bool):
         system_prompt = (
             f"Generate a creative {'bedtime' if bedtime else 'and engaging'} story for {who}\n"
             "Include the child in the story also\n"
@@ -39,7 +39,7 @@ class Story(BaseModel):
             "Return these tags separately with a short prompt that I would use an AI to generate the images"
             "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
         )
-        response = completion(
+        response = litellm.completion(
             model="gpt-4o-mini",
             response_format=cls,
             messages=[
@@ -49,9 +49,28 @@ class Story(BaseModel):
         )
         story = Story.parse_raw(response.choices[0].message.content)
         for image in story.images:
-            ai_image = image.from_llm()
+            ai_image = image.generate()
             story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
-        return story.html
+        return story
+
+    def audio(self, who: str, bedtime: bool):
+        response = litellm.speech(
+            #model="gpt-4o-mini-tts",
+            model="openai/tts-1",
+            voice="coral",
+            input=self.text,
+            optional_params={
+                "instructions": (
+                    "Female, 30s, friendly, motherly, soft, positive\n"
+                    f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}\n",
+                    "Easy and clear pronunciation so a child can understand\n"
+                )
+            },
+        )
+        buffer = io.BytesIO()
+        response.stream_to_file(buffer)
+        buffer.seek(0)
+        return buffer.read()
 
 
 if __name__ == "__main__":
@@ -62,5 +81,6 @@ if __name__ == "__main__":
     bedtime = st.checkbox("Bedtime")
 
     if st.button("Generate Story"):
-        html = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
-        st.html(html)
+        story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
+        st.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
+        st.html(story.html)
