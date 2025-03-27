@@ -22,8 +22,7 @@ class ImageTag(BaseModel):
 
 
 class Story(BaseModel):
-    text: str = Field(description="Raw text of the story I will feed to a speech to text engine")
-    html: str = Field(description="The same story (in html that would go inside <body>) to be rendered prettily")
+    text: str = Field(description="The story")
     images: List[ImageTag] = Field(description="The images for the story")
 
     @classmethod
@@ -31,10 +30,7 @@ class Story(BaseModel):
         system_prompt = (
             f"Generate a creative {'bedtime' if bedtime else 'and engaging'} story for {who}\n"
             "Include the child in the story also\n"
-            "Return the story as text (for audio transcription) and html that would go inside the <body> tag\n"
-            "Make sure the text inside the html is same as the raw text\n"
-            "For styles in the html, use inline styles on the HTML elements\n"
-            "Also include placeholder image tags (2-3) in the html as follows:\n"
+            "Return the story as text  and also include placeholder image tags (2-3) inside the text as follows:\n"
             f"<img src='[[replace_image_1]]' width='{ImageTag.size}' height='{ImageTag.size}'/>"
             "Return these tags separately with a short prompt that I would use an AI to generate the images"
             "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
@@ -50,7 +46,7 @@ class Story(BaseModel):
         story = Story.parse_raw(response.choices[0].message.content)
         for image in story.images:
             ai_image = image.generate()
-            story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
+            story.text = story.text.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
         return story
 
     def audio(self, who: str, bedtime: bool):
@@ -63,12 +59,13 @@ class Story(BaseModel):
                 "instructions": (
                     "Female, 30s, friendly, motherly, soft, positive\n"
                     f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}\n",
-                    "Easy and clear pronunciation so a child can understand\n"
+                    "Easy and clear pronunciation for a child to understand\n"
                 )
             },
         )
         buffer = io.BytesIO()
-        response.stream_to_file(buffer)
+        for chunk in response:
+            buffer.write(chunk)
         buffer.seek(0)
         return buffer.read()
 
@@ -76,11 +73,14 @@ class Story(BaseModel):
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
     st.title("Story Generator")
+
     who = st.text_input("Who:", "3-year old boy named Aidan")
     prompt = st.text_input("Prompt:", "colorful bison and a monster truck")
     bedtime = st.checkbox("Bedtime")
 
     if st.button("Generate Story"):
         story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
+        st.balloons()
+        st.html(story.text)
         st.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
-        st.html(story.html)
+
