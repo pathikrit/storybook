@@ -1,4 +1,3 @@
-from turtledemo.sorting_animate import instructions1
 from typing import List, ClassVar
 import re
 
@@ -6,11 +5,8 @@ import streamlit as st
 
 from pydantic import BaseModel, Field
 
-from openai import OpenAI
-from dotenv import load_dotenv
+from ai import ask_ai
 
-load_dotenv()
-client = OpenAI()
 
 class ImageTag(BaseModel):
     id: int = Field(description="Image id starting from 1 - I will use this to replace the [[replace_image_X]] tags")
@@ -19,9 +15,10 @@ class ImageTag(BaseModel):
     size: ClassVar[int] = 1024
 
     def generate(self):
-        return client.images.generate(
+        return ask_ai(
             model="dall-e-3",
-            prompt=f"Generate a Studio Ghibli style story book image for the following prompt: {self.prompt}",
+            instructions=[f"Generate a Studio Ghibli style story book image for the given prompt"],
+            prompt=self.prompt,
             size=f"{ImageTag.size}x{ImageTag.size}",
         )
 
@@ -32,39 +29,32 @@ class Story(BaseModel):
 
     @classmethod
     def generate(cls, who: str, prompt: str, bedtime: bool):
-        system_prompt = (
-            f"Generate a creative {'bedtime' if bedtime else 'and engaging'} story for {who}\n"
-            "Include the child in the story also\n"
-            "Return the story as html (which would go inside div)\n"
-            "Also include placeholder image tags (2-3) inside the text at appropriate locations follows:\n"
-            f"<img src='[[replace_image_1]]' width='{ImageTag.size}' height='{ImageTag.size}'/>\n"
-            "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images\n"
-            "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
-        )
-        response = client.beta.chat.completions.parse(
+        return ask_ai(
             model="gpt-4o-mini",
-            response_format=cls,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt},
-            ]
+            instructions=[
+                f"Generate a creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
+                "Include the child in the story also",
+                "Return the story as html (which would go inside div)",
+                "Also include placeholder image tags (2-3) inside the text at appropriate locations follows:",
+                f"<img src='[[replace_image_1]]' width='{ImageTag.size}' height='{ImageTag.size}'/>",
+                "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
+                "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
+            ],
+            prompt=prompt,
+            response_format=cls
         )
-        return response.choices[0].message.parsed
 
     def audio(self, who: str, bedtime: bool):
-        text = re.sub(r"<.*?>", '', self.html)  # strip html tags
-        with client.audio.speech.with_streaming_response.create(
+        return ask_ai(
             model="gpt-4o-mini-tts",
+            instructions=[
+                "Female, 30s, friendly, motherly, soft, slow, positive",
+                f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}",
+                "Easy and clear pronunciation for a child to understand"
+            ],
+            prompt=re.sub(r"<.*?>", '', self.html),  # strip html tags
             voice="coral",
-            instructions = (
-                "Female, 30s, friendly, motherly, soft, slow, positive\n"
-                f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}\n"
-                "Easy and clear pronunciation for a child to understand\n"
-            ),
-            input = text
-        ) as response:
-            bytes = b"".join(chunk for chunk in response)
-        return bytes
+        )
 
 
 if __name__ == "__main__":
@@ -93,7 +83,7 @@ if __name__ == "__main__":
                 progress += 10
                 progress_bar.progress(progress, text=f"Drawing about '{image.prompt}' ...")
                 ai_image = image.generate()
-                story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
+                story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.url)
                 story_element.html(story.html)
         else:
             story_element.html(re.sub(r"<img.*?>", '', story.html))
