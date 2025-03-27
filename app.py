@@ -82,7 +82,9 @@ if __name__ == "__main__":
         if audio:
             st.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
         if images:
+            story_element = st.html(story.html)
             for image in story.images:
                 ai_image = image.generate()
                 story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
-                st.html(story.html)
+                story_element.html(story.html)
+        st.balloons()
