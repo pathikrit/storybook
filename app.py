@@ -1,11 +1,16 @@
+from turtledemo.sorting_animate import instructions1
 from typing import List, ClassVar
 import re
 
 import streamlit as st
 
 from pydantic import BaseModel, Field
-import litellm
 
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+client = OpenAI()
 
 class ImageTag(BaseModel):
     id: int = Field(description="Image id starting from 1 - I will use this to replace the [[replace_image_X]] tags")
@@ -14,10 +19,9 @@ class ImageTag(BaseModel):
     size: ClassVar[int] = 1024
 
     def generate(self):
-        return litellm.image_generation(
+        return client.images.generate(
             model="dall-e-3",
             prompt=f"Generate a Studio Ghibli style story book image for the following prompt: {self.prompt}",
-            response_format="url",
             size=f"{ImageTag.size}x{ImageTag.size}",
         )
 
@@ -37,7 +41,7 @@ class Story(BaseModel):
             "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images\n"
             "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
         )
-        response = litellm.completion(
+        response = client.beta.chat.completions.parse(
             model="gpt-4o-mini",
             response_format=cls,
             messages=[
@@ -45,24 +49,22 @@ class Story(BaseModel):
                 {"role": "user", "content": prompt},
             ]
         )
-        return Story.parse_raw(response.choices[0].message.content)
+        return response.choices[0].message.parsed
 
     def audio(self, who: str, bedtime: bool):
         text = re.sub(r"<.*?>", '', self.html)  # strip html tags
-        response = litellm.speech(
-            # model="gpt-4o-mini-tts",
-            model="openai/tts-1",
+        with client.audio.speech.with_streaming_response.create(
+            model="gpt-4o-mini-tts",
             voice="coral",
-            input=text,
-            optional_params={
-                "instructions": (
-                    "Female, 30s, friendly, motherly, soft, slow, positive\n"
-                    f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}\n"
-                    "Easy and clear pronunciation for a child to understand\n"
-                )
-            },
-        )
-        return response.content
+            instructions = (
+                "Female, 30s, friendly, motherly, soft, slow, positive\n"
+                f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}\n"
+                "Easy and clear pronunciation for a child to understand\n"
+            ),
+            input = text
+        ) as response:
+            bytes = b"".join(chunk for chunk in response)
+        return bytes
 
 
 if __name__ == "__main__":
@@ -78,13 +80,28 @@ if __name__ == "__main__":
     images = cols[2].toggle("Images", value=True)
 
     if st.button("Generate Story"):
+        progress = 0
+        progress_bar = st.progress(progress, text="Writing story ...")
         story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
-        if audio:
-            st.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
+        progress += 50
+        progress_bar.progress(progress)
+        audio_element = st.empty()
+        story_element = st.html(story.html)
+
         if images:
-            story_element = st.html(story.html)
             for image in story.images:
+                progress += 10
+                progress_bar.progress(progress, text=f"Drawing about '{image.prompt}' ...")
                 ai_image = image.generate()
                 story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.data[0].url)
                 story_element.html(story.html)
+        else:
+            story_element.html(re.sub(r"<img.*?>", '', story.html))
+
+        if audio:
+            progress += 20
+            progress_bar.progress(progress, "Reading the story ...")
+            audio_element.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
+
+        progress_bar.empty()
         st.balloons()
