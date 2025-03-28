@@ -50,10 +50,12 @@ class Story(BaseModel):
             instructions=[
                 "Female, 30s, friendly, motherly, soft, slow, positive",
                 f"reading a {'soothing bedtime' if bedtime else 'exciting'} story to a {who}",
+                "speak slowly as if lulling a child to sleep" if bedtime else "show excitement in your voice; try to engage the child",
                 "Easy and clear pronunciation for a child to understand"
             ],
             prompt=re.sub(r"<.*?>", '', self.html),  # strip html tags
             voice="coral",
+            speed=0.8 if bedtime else 0.9,  # slower speed for kids
         )
 
 
