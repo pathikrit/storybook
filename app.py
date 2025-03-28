@@ -1,3 +1,4 @@
+import uuid
 from typing import List, ClassVar
 import re
 
@@ -14,12 +15,13 @@ class ImageTag(BaseModel):
 
     size: ClassVar[int] = 1024
 
-    def generate(self):
+    def generate(self, consistent_style_id):
         return ask_ai(
             model="dall-e-3",
-            instructions=[f"Generate a Studio Ghibli style story book image for the given prompt"],
+            instructions=[f"Generate a Studio Ghibli style story book watercolor image for the given prompt"],
             prompt=self.prompt,
             size=f"{ImageTag.size}x{ImageTag.size}",
+            consistent_style_id=consistent_style_id
         )
 
 
@@ -35,7 +37,7 @@ class Story(BaseModel):
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
                 "Include the child in the story also (maybe not as the main character)",
                 "Return the story as html (which would go inside div)",
-                "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
+                "Also include placeholder image tags (1-3) inside the text at appropriate locations follows:",
                 "<img src='[[replace_image_1]]' style='max-width: 100%; height: auto; display: block; margin: auto;' />",
                 "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
                 "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
@@ -81,9 +83,10 @@ if __name__ == "__main__":
             story_element = st.html(story.html)
 
             if images:
+                consistent_style_id = uuid.uuid4().hex
                 for image in story.images:
                     status.update(label=f"Drawing {image.prompt} ...")
-                    ai_image = image.generate()
+                    ai_image = image.generate(consistent_style_id)
                     story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.url)
                     story_element.html(story.html)
             else:
