@@ -26,7 +26,7 @@ def ask_ai(
             )
             return response.choices[0].message.parsed
 
-        case "dall-e-3":
+        case "dall-e-2" | "dall-e-3":
             response = client.images.generate(model=model, prompt=f"{instructions}: {prompt}", **kwargs)
             return response.data[0]
 
