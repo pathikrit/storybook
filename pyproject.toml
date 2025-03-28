@@ -1,22 +1,17 @@
-[project]
+[tool.poetry]
 name = "storybook"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "pathikrit",email = "pathikritbhowmick@msn.com"}
-]
+authors = ["pathikrit <pathikritbhowmick@msn.com>"]
 readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "streamlit (>=1.44.0,<2.0.0)",
-    "pydantic (>=2.10.6,<3.0.0)",
-    "openai (>=1.69.0,<2.0.0)",
-    "dotenv (>=0.9.9,<0.10.0)",
-]
-
-[tool.poetry]
 packages = [{include = "storybook", from = "src"}]
 
+[tool.poetry.dependencies]
+python = ">=3.12"
+streamlit = ">=1.44.0,<2.0.0"
+pydantic = ">=2.10.6,<3.0.0"
+openai = ">=1.69.0,<2.0.0"
+dotenv = ">=0.9.9,<0.10.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
