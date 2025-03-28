@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "storybook", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.12"
+python = "3.11.*"
 streamlit = ">=1.44.0,<2.0.0"
 pydantic = ">=2.10.6,<3.0.0"
 openai = ">=1.69.0,<2.0.0"

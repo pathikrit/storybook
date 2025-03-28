@@ -49,7 +49,7 @@ class Story(BaseModel):
             model="gpt-4o-mini-tts",
             instructions=[
                 "Female, 30s, friendly, motherly, soft, slow, positive",
-                f"reading a {"soothing bedtime" if bedtime else "exciting"} story to a {who}",
+                f"reading a {'soothing bedtime' if bedtime else 'exciting'} story to a {who}",
                 "Easy and clear pronunciation for a child to understand"
             ],
             prompt=re.sub(r"<.*?>", '', self.html),  # strip html tags
