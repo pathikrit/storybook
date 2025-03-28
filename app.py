@@ -36,7 +36,7 @@ class Story(BaseModel):
                 "Include the child in the story also (maybe not as the main character)",
                 "Return the story as html (which would go inside div)",
                 "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
-                f"<img src='[[replace_image_1]]' style='max-width: 100%; height: auto; display: block; margin: auto;' />",
+                "<img src='[[replace_image_1]]' style='max-width: 100%; height: auto; display: block; margin: auto;' />",
                 "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
                 "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
             ],
@@ -53,10 +53,13 @@ class Story(BaseModel):
                 "speak slowly as if lulling a child to sleep" if bedtime else "show excitement in your voice; try to engage the child",
                 "Easy and clear pronunciation for a child to understand"
             ],
-            prompt=re.sub(r"<.*?>", '', self.html),  # strip html tags
+            prompt=self.strip_html_tags(),
             voice="coral",
             speed=0.8 if bedtime else 0.9,  # slower speed for kids
         )
+
+    def strip_html_tags(self, tag: str = "") -> str:
+        return re.sub(f"<{tag}.*?>", '', self.html)
 
 
 if __name__ == "__main__":
@@ -71,7 +74,7 @@ if __name__ == "__main__":
     audio = cols[1].toggle("Audio", value=True)
     images = cols[2].toggle("Images", value=True)
 
-    if st.button("Generate Story"):
+    if st.button("Make Story"):
         with st.status(label="Writing story ...", expanded=False) as status:
             story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
             audio_element = st.empty()
@@ -84,7 +87,7 @@ if __name__ == "__main__":
                     story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.url)
                     story_element.html(story.html)
             else:
-                story_element.html(re.sub(r"<img.*?>", '', story.html))
+                story_element.html(story.strip_html_tags("img"))
 
             if audio:
                 status.update(label="Reading the story ...")
