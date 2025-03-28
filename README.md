@@ -1,4 +1,7 @@
 # Story Generator
+A quick and dirty app to read aloud bedtime stories
+
+![App](https://pbs.twimg.com/media/GnI3l47WAAA1bMB?format=jpg)
 
 ## Installation
 ```shell
