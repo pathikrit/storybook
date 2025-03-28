@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
             if audio:
                 status.update(label="Reading the story ...")
-                audio_element.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
+                audio_element.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3", autoplay=True)
 
             status.update(label="Story is ready!", state="complete", expanded=True)
             st.balloons()
