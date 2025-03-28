@@ -70,28 +70,23 @@ if __name__ == "__main__":
     images = cols[2].toggle("Images", value=True)
 
     if st.button("Generate Story"):
-        progress = 0
-        progress_bar = st.progress(progress, text="Writing story ...")
-        story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
-        progress += 50
-        progress_bar.progress(progress)
-        audio_element = st.empty()
-        story_element = st.html(story.html)
+        with st.status(label="Writing story ...", expanded=False) as status:
+            story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
+            audio_element = st.empty()
+            story_element = st.html(story.html)
 
-        if images:
-            for image in story.images:
-                progress += 10
-                progress_bar.progress(progress, text=f"Drawing about '{image.prompt}' ...")
-                ai_image = image.generate()
-                story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.url)
-                story_element.html(story.html)
-        else:
-            story_element.html(re.sub(r"<img.*?>", '', story.html))
+            if images:
+                for image in story.images:
+                    status.update(label=f"Drawing {image.prompt} ...")
+                    ai_image = image.generate()
+                    story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.url)
+                    story_element.html(story.html)
+            else:
+                story_element.html(re.sub(r"<img.*?>", '', story.html))
 
-        if audio:
-            progress += 20
-            progress_bar.progress(progress, "Reading the story ...")
-            audio_element.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
+            if audio:
+                status.update(label="Reading the story ...")
+                audio_element.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3")
 
-        progress_bar.empty()
-        st.balloons()
+            status.update(label="Story is ready!", state="complete", expanded=True)
+            st.balloons()
