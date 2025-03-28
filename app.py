@@ -37,7 +37,7 @@ class Story(BaseModel):
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
                 "Include the child in the story also (maybe not as the main character)",
                 "Return the story as html (which would go inside div)",
-                "Also include placeholder image tags (1-3) inside the text at appropriate locations follows:",
+                "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
                 "<img src='[[replace_image_1]]' style='max-width: 100%; height: auto; display: block; margin: auto;' />",
                 "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
                 "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
@@ -77,10 +77,14 @@ if __name__ == "__main__":
     images = cols[2].toggle("Images", value=True)
 
     if st.button("Make Story"):
-        with st.status(label="Writing story ...", expanded=False) as status:
+        with st.status(label="Writing story ...", expanded=True) as status:
             story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
             audio_element = st.empty()
             story_element = st.html(story.html)
+
+            if audio:
+                status.update(label="Reading the story ...")
+                audio_element.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3", autoplay=True)
 
             if images:
                 consistent_style_id = uuid.uuid4().hex
@@ -92,9 +96,5 @@ if __name__ == "__main__":
             else:
                 story_element.html(story.strip_html_tags("img"))
 
-            if audio:
-                status.update(label="Reading the story ...")
-                audio_element.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3", autoplay=True)
-
-            status.update(label="Story is ready!", state="complete", expanded=True)
+            status.update(label="Story is ready!", state="complete")
             st.balloons()
