@@ -16,7 +16,7 @@ class ImageTag(BaseModel):
 
     def generate(self):
         return ask_ai(
-            model="dall-e-2",
+            model="dall-e-3",
             instructions=[f"Generate a Studio Ghibli style story book image for the given prompt"],
             prompt=self.prompt,
             size=f"{ImageTag.size}x{ImageTag.size}",
@@ -35,7 +35,7 @@ class Story(BaseModel):
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
                 "Include the child in the story also (maybe not as the main character)",
                 "Return the story as html (which would go inside div)",
-                "Also include placeholder image tags (2-3) inside the text at appropriate locations follows:",
+                "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
                 f"<img src='[[replace_image_1]]' style='max-width: 100%; height: auto; display: block; margin: auto;' />",
                 "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
                 "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
