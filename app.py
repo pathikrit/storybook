@@ -1,6 +1,7 @@
 import uuid
 from typing import List, ClassVar
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 import streamlit as st
 
@@ -37,7 +38,7 @@ class Story(BaseModel):
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
                 "Include the child in the story also (maybe not as the main character)",
                 "Return the story as html (which would go inside div)",
-                "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
+                "Also include placeholder image tags (2-3) inside the text at appropriate locations follows:",
                 "<img src='[[replace_image_1]]' style='max-width: 100%; height: auto; display: block; margin: auto;' />",
                 "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
                 "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
@@ -77,24 +78,35 @@ if __name__ == "__main__":
     images = cols[2].toggle("Images", value=True)
 
     if st.button("Make Story"):
-        with st.status(label="Writing story ...", expanded=True) as status:
+        with st.status(label="Writing story ...", expanded=False) as status:
             story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
             audio_element = st.empty()
             story_element = st.html(story.html)
 
-            if audio:
-                status.update(label="Reading the story ...")
-                audio_element.audio(story.audio(who=who, bedtime=bedtime), format="audio/mp3", autoplay=True)
+            with ThreadPoolExecutor() as executor:
+                parallel_tasks = []
 
-            if images:
-                consistent_style_id = uuid.uuid4().hex
-                for image in story.images:
-                    status.update(label=f"Drawing {image.prompt} ...")
-                    ai_image = image.generate(consistent_style_id)
-                    story.html = story.html.replace(f"[[replace_image_{image.id}]]", ai_image.url)
-                    story_element.html(story.html)
-            else:
-                story_element.html(story.strip_html_tags("img"))
+                if images:
+                    consistent_style_id = uuid.uuid4().hex
+                    for image in story.images:
+                        status.update(label=f"Drawing {image.prompt} ...")
+                        task = lambda img=image: (img.generate(consistent_style_id=consistent_style_id), img.id)
+                        parallel_tasks.append(executor.submit(task))
+                else:
+                    story_element.html(story.strip_html_tags("img"))
 
-            status.update(label="Story is ready!", state="complete")
+                if audio:
+                    status.update(label="Recording the story ...")
+                    parallel_tasks.append(executor.submit(story.audio, who=who, bedtime=bedtime))
+
+                for task in parallel_tasks:
+                    match task.result():
+                        case bytes() as audio:
+                            audio_element.audio(audio, format="audio/mp3", autoplay=True)
+                            status.update(label="Reading story ...", expanded=True)
+                        case image, id:
+                            story.html = story.html.replace(f"[[replace_image_{id}]]", image.url)
+
+            story_element.html(story.html)
+            status.update(label="Story is ready!", state="complete", expanded=True)
             st.balloons()
