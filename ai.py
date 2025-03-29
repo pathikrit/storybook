@@ -31,8 +31,15 @@ def ask_ai(
                 del kwargs["consistent_style_id"]
                 instructions.insert(0, f"Use gen id = {consistent_style_id}")
             instructions.append(prompt)
-            response = client.images.generate(model=model, prompt="\n".join(instructions), **kwargs)
-            return response.data[0]
+            response = client.images.generate(
+                model=model,
+                response_format=response_format,
+                prompt="\n".join(instructions),
+                **kwargs
+            )
+            image = response.data[0]
+            image.url = image.url or f"data:image/png;base64,{image.b64_json}"
+            return image
 
         case "gpt-4o-mini-tts":
             with client.audio.speech.with_streaming_response.create(

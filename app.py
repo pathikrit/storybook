@@ -21,6 +21,7 @@ class ImageTag(BaseModel):
             model="dall-e-3",
             instructions=[f"Generate a Studio Ghibli style story book watercolor image for the given prompt"],
             prompt=self.prompt,
+            response_format="b64_json",
             size=f"{ImageTag.size}x{ImageTag.size}",
             consistent_style_id=consistent_style_id
         )
@@ -56,10 +57,11 @@ class Story(BaseModel):
                 "speak slowly as if lulling a child to sleep" if bedtime else "show excitement in your voice; try to engage the child",
                 "Easy and clear pronunciation for a child to understand"
             ],
-            prompt=re.sub(r"<.*?>", '', self.html), # strip html tags
+            prompt=re.sub(r"<.*?>", '', self.html),  # strip html tags
             voice="coral",
             speed=0.8 if bedtime else 0.9,  # slower speed for kids
         )
+
 
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
