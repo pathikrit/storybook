@@ -101,6 +101,8 @@ if __name__ == "__main__":
                 if generate_audio:
                     status.update(label=f"Recording the story about {story.title} ...")
                     parallel_tasks.append(executor.submit(story.audio, who=who, bedtime=bedtime))
+                else:
+                    audio = None
 
                 for task in parallel_tasks:
                     match task.result():
@@ -122,5 +124,8 @@ if __name__ == "__main__":
                 on_click="ignore",  # keep the rest of the app running
                 mime="text/html",
                 file_name=f"story_{story.file_name}.html",
-                data=export.render(story=story, b64_audio=base64.b64encode(audio).decode('utf-8')),
+                data=export.render(
+                    story=story,
+                    b64_audio=base64.b64encode(audio).decode('utf-8') if audio else None
+                ),
             )
