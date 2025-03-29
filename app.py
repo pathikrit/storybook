@@ -80,12 +80,12 @@ if __name__ == "__main__":
     generate_audio = cols[1].toggle("Audio", value=True)
     generate_images = cols[2].toggle("Images", value=True)
 
-    cols = st.columns(2)
 
-    if cols[0].button("Make Story"):
+    if st.button("Make Story"):
         with st.status(label="Writing story ...", expanded=False) as status:
             story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
             audio_element = st.empty()
+            download_element = st.empty()
             story_element = st.html(story.html)
 
             with ThreadPoolExecutor() as executor:
@@ -117,7 +117,7 @@ if __name__ == "__main__":
             status.update(label="Story is ready!", state="complete", expanded=True)
             st.balloons()
 
-            cols[1].download_button(
+            download_element.download_button(
                 label="Download Story",
                 on_click="ignore",  # keep the rest of the app running
                 mime="text/html",
