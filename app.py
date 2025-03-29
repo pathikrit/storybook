@@ -5,6 +5,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 
 import streamlit as st
+from mako.template import Template
 
 from pydantic import BaseModel, Field
 
@@ -67,6 +68,7 @@ class Story(BaseModel):
 
 
 if __name__ == "__main__":
+    export = Template(filename='download.html')
     st.set_page_config(layout="wide")
     st.title("Story Generator")
 
@@ -117,62 +119,8 @@ if __name__ == "__main__":
 
             cols[1].download_button(
                 label="Download Story",
-                on_click="ignore", # keep the rest of the app running
+                on_click="ignore",  # keep the rest of the app running
                 mime="text/html",
                 file_name=f"story_{story.file_name}.html",
-                data=
-f"""
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>{story.title}</title>
-<style>
-  /* Apply a dark theme to the whole document */
-  html, body {{
-      background-color: #121212;
-      color: #e0e0e0;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-  }}
-
-  /* Style the audio control container */
-  audio {{
-      margin: 20px 0;
-      width: 100%;
-  }}
-
-  /* Add some styling for the horizontal rule */
-  hr {{
-      border: 1px solid #333;
-      margin: 20px 0;
-  }}
-
-  /* Ensure links are visible */
-  a {{
-      color: #bb86fc;
-  }}
-
-  /* Optional: style images to have a subtle border and shadow */
-  img {{
-      max-width: 100%;
-      height: auto;
-      border: 1px solid #333;
-      box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-  }}
-</style>
-</head>
-<body>    
-    <div>
-        <audio controls>
-            <source src="data:audio/mp3;base64,{base64.b64encode(audio).decode('utf-8')}" type="audio/mp3">
-            Your browser does not support the audio element.
-        </audio>
-    </div>
-    <hr>
-    <div>{story.html}</div>
-</body>
-</html>
-""",
-)
+                data=export.render(story=story, b64_audio=base64.b64encode(audio).decode('utf-8')),
+            )
