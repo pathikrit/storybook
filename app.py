@@ -1,3 +1,4 @@
+import base64
 import uuid
 from typing import List, ClassVar
 import re
@@ -28,6 +29,8 @@ class ImageTag(BaseModel):
 
 
 class Story(BaseModel):
+    file_name: str = Field(description="File name (without extension) to export this story to a html file like [story_{file_name}.html]")
+    title: str = Field(description="Title of the story")
     html: str = Field(description="The story in HTML which would go inside a div")
     images: List[ImageTag] = Field(description="The images for the story")
 
@@ -72,10 +75,12 @@ if __name__ == "__main__":
 
     cols = st.columns(3)
     bedtime = cols[0].toggle("Bedtime")
-    audio = cols[1].toggle("Audio", value=True)
-    images = cols[2].toggle("Images", value=True)
+    generate_audio = cols[1].toggle("Audio", value=True)
+    generate_images = cols[2].toggle("Images", value=True)
 
-    if st.button("Make Story"):
+    cols = st.columns(2)
+
+    if cols[0].button("Make Story"):
         with st.status(label="Writing story ...", expanded=False) as status:
             story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
             audio_element = st.empty()
@@ -84,15 +89,15 @@ if __name__ == "__main__":
             with ThreadPoolExecutor() as executor:
                 parallel_tasks = []
 
-                if images:
+                if generate_images:
                     consistent_style_id = uuid.uuid4().hex
                     for image in story.images:
                         status.update(label=f"Drawing {image.prompt} ...")
                         task = lambda img=image: (img.generate(consistent_style_id=consistent_style_id), img.id)
                         parallel_tasks.append(executor.submit(task))
 
-                if audio:
-                    status.update(label="Recording the story ...")
+                if generate_audio:
+                    status.update(label=f"Recording the story about {story.title} ...")
                     parallel_tasks.append(executor.submit(story.audio, who=who, bedtime=bedtime))
 
                 for task in parallel_tasks:
@@ -109,3 +114,65 @@ if __name__ == "__main__":
 
             status.update(label="Story is ready!", state="complete", expanded=True)
             st.balloons()
+
+            cols[1].download_button(
+                label="Download Story",
+                on_click="ignore", # keep the rest of the app running
+                mime="text/html",
+                file_name=f"story_{story.file_name}.html",
+                data=
+f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{story.title}</title>
+<style>
+  /* Apply a dark theme to the whole document */
+  html, body {{
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+  }}
+
+  /* Style the audio control container */
+  audio {{
+      margin: 20px 0;
+      width: 100%;
+  }}
+
+  /* Add some styling for the horizontal rule */
+  hr {{
+      border: 1px solid #333;
+      margin: 20px 0;
+  }}
+
+  /* Ensure links are visible */
+  a {{
+      color: #bb86fc;
+  }}
+
+  /* Optional: style images to have a subtle border and shadow */
+  img {{
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #333;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+  }}
+</style>
+</head>
+<body>    
+    <div>
+        <audio controls>
+            <source src="data:audio/mp3;base64,{base64.b64encode(audio).decode('utf-8')}" type="audio/mp3">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+    <hr>
+    <div>{story.html}</div>
+</body>
+</html>
+""",
+)
