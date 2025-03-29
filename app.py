@@ -56,14 +56,10 @@ class Story(BaseModel):
                 "speak slowly as if lulling a child to sleep" if bedtime else "show excitement in your voice; try to engage the child",
                 "Easy and clear pronunciation for a child to understand"
             ],
-            prompt=self.strip_html_tags(),
+            prompt=re.sub(r"<.*?>", '', self.html), # strip html tags
             voice="coral",
             speed=0.8 if bedtime else 0.9,  # slower speed for kids
         )
-
-    def strip_html_tags(self, tag: str = "") -> str:
-        return re.sub(f"<{tag}.*?>", '', self.html)
-
 
 if __name__ == "__main__":
     st.set_page_config(layout="wide")
@@ -92,8 +88,6 @@ if __name__ == "__main__":
                         status.update(label=f"Drawing {image.prompt} ...")
                         task = lambda img=image: (img.generate(consistent_style_id=consistent_style_id), img.id)
                         parallel_tasks.append(executor.submit(task))
-                else:
-                    story_element.html(story.strip_html_tags("img"))
 
                 if audio:
                     status.update(label="Recording the story ...")
