@@ -38,10 +38,10 @@ class Story(BaseModel):
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
                 "Include the child in the story also (maybe not as the main character)",
                 "Return the story as html (which would go inside div)",
-                "Also include placeholder image tags (2-3) inside the text at appropriate locations follows:",
-                "<img src='[[replace_image_1]]' style='max-width: 100%; height: auto; display: block; margin: auto;' />",
+                "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
+                "<img src='[[replace_image_1]]' hidden>"
                 "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
-                "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately"
+                "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images"
             ],
             prompt=prompt,
             response_format=cls
@@ -101,12 +101,15 @@ if __name__ == "__main__":
 
                 for task in parallel_tasks:
                     match task.result():
+                        case image, id:
+                            story.html = story.html.replace(
+                                f"<img src='[[replace_image_{id}]]' hidden>",
+                                f"<img src='{image.url}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
+                            )
+                            story_element.html(story.html)
                         case bytes() as audio:
                             audio_element.audio(audio, format="audio/mp3", autoplay=True)
                             status.update(label="Reading story ...", expanded=True)
-                        case image, id:
-                            story.html = story.html.replace(f"[[replace_image_{id}]]", image.url)
 
-            story_element.html(story.html)
             status.update(label="Story is ready!", state="complete", expanded=True)
             st.balloons()
