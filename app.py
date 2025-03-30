@@ -47,6 +47,7 @@ class Story(BaseModel):
                 "<img src='[[replace_image_1]]' hidden>"
                 "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
                 "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images"
+                "Always bring the story to a meaningful closure and end with 'THE END'"
             ],
             prompt=prompt,
             response_format=cls
