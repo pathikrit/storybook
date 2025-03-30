@@ -30,18 +30,19 @@ class ImageTag(BaseModel):
 
 
 class Story(BaseModel):
-    file_name: str = Field(description="File name (without extension) to export this story to a html file like [story_{file_name}.html]")
+    file_name: str = Field(
+        description="File name (without extension) to export this story to a html file like [story_{file_name}.html]")
     title: str = Field(description="Title of the story")
     html: str = Field(description="The story in HTML which would go inside a div")
     images: List[ImageTag] = Field(description="The images for the story")
 
     @classmethod
-    def generate(cls, who: str, prompt: str, bedtime: bool):
+    def generate(cls, who: str, prompt: str, bedtime: bool, include_child: bool):
         return ask_ai(
             model="gpt-4o-mini",
             instructions=[
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
-                "Include the child in the story also (maybe not as the main character)",
+                "Include the child in the story also" if include_child else "No need to include the child in the story",
                 "Return the story as html (which would go inside div)",
                 "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
                 "<img src='[[replace_image_1]]' hidden>"
@@ -76,15 +77,15 @@ if __name__ == "__main__":
     who = st.text_input("Who:", "3-year old boy named Aidan")
     prompt = st.text_area("Prompt:", "colorful bison and a monster truck")
 
-    cols = st.columns(3)
-    bedtime = cols[0].toggle("Bedtime")
-    generate_audio = cols[1].toggle("Audio", value=True)
-    generate_images = cols[2].toggle("Images", value=True)
-
+    c1, c2, c3, c4 = st.columns(4)
+    bedtime = c1.toggle("Bedtime mode (calm voice)")
+    include_child = c2.toggle("Include child in story", value=True)
+    generate_audio = c3.toggle("Read story aloud", value=True)
+    generate_images = c4.toggle("Include images in story", value=True)
 
     if st.button("Make Story"):
         with st.status(label="Writing story ...", expanded=False) as status:
-            story = Story.generate(who=who, prompt=prompt, bedtime=bedtime)
+            story = Story.generate(who=who, prompt=prompt, bedtime=bedtime, include_child=include_child)
             audio_element = st.empty()
             download_element = st.empty()
             story_element = st.html(story.html)
@@ -117,9 +118,6 @@ if __name__ == "__main__":
                             audio_element.audio(audio, format="audio/mp3", autoplay=True)
                             status.update(label="Reading story ...", expanded=True)
 
-            status.update(label="Story is ready!", state="complete", expanded=True)
-            st.balloons()
-
             download_element.download_button(
                 label="Download Story",
                 on_click="ignore",  # keep the rest of the app running
@@ -130,3 +128,6 @@ if __name__ == "__main__":
                     b64_audio=base64.b64encode(audio).decode('utf-8') if audio else None
                 ),
             )
+
+            status.update(label="Story is ready!", state="complete", expanded=True)
+            st.balloons()
