@@ -11,5 +11,5 @@ poetry install --no-root
 
 ## Run
 ```
-poetry run streamlit run app.py
+poetry run fastapi dev server.py
 ```
