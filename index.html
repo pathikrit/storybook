@@ -47,7 +47,7 @@
         generate_images: true
     }
 
-    update_defaults = () => {
+    const update_defaults = () => {
         for (const [id, default_value] of Object.entries(inputs)) {
             const value = localStorage.getItem(id) ?? default_value
             const el = $(`#${id}`)
@@ -59,7 +59,7 @@
         }
     }
 
-    read_inputs = () => {
+    const read_inputs = () => {
         const params = {}
         for (const id in inputs) {
             const el = $(`#${id}`)
@@ -70,19 +70,17 @@
         return params
     }
 
-    submit_form = (event) => {
-        event.preventDefault()
-        const output = $('#result')
-        output.html('<span aria-busy="true">Writing story...</span>')
-        $.get('/story', read_inputs(), (res) => {
-            output.html(`<article>${res.story}</article>`)
-            if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
-        })
-    }
-
     $(document).ready(() => {
         update_defaults()
-        $('#form').on('submit', submit_form);
+        $('#form').on('submit', (event) => {
+            event.preventDefault()
+            const output = $('#result')
+            output.html('<span aria-busy="true">Writing story...</span>')
+            $.get('/story', read_inputs(), (res) => {
+                output.html(`<article>${res.story}</article>`)
+                if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
+            })
+        });
     });
 </script>
 </body>
