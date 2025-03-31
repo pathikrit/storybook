@@ -4,7 +4,6 @@ from typing import List, ClassVar
 import re
 from concurrent.futures import ThreadPoolExecutor
 
-import streamlit as st
 from mako.template import Template
 
 from pydantic import BaseModel, Field
@@ -68,8 +67,9 @@ class Story(BaseModel):
             speed=0.8 if bedtime else 0.9,  # slower speed for kids
         )
 
+def streamlit_app():
+    import streamlit as st
 
-if __name__ == "__main__":
     export = Template(filename='download.html')
     st.set_page_config(layout="wide")
     st.title("Story Generator")
@@ -131,3 +131,6 @@ if __name__ == "__main__":
 
             status.update(label="Story is ready!", state="complete", expanded=True)
             st.balloons()
+
+if __name__ == "__main__":
+    streamlit_app()
