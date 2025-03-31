@@ -28,7 +28,7 @@
 </div>
 
 <script>
-    defaults = {
+    inputs = {
         who: "3-yr old boy named Aidan",
         prompt: "Colorful bison and a monster truck",
         bedtime: false,
@@ -38,11 +38,11 @@
     }
 
     $(document).ready(() => {
-        for (const [id, default_value] of Object.entries(defaults)) {
+        for (const [id, default_value] of Object.entries(inputs)) {
             const el = $(`#${id}`)
             const value = localStorage.getItem(id) ?? default_value
             if (el.is(':checkbox')) {
-                el.prop('checked', value)
+                el.prop('checked', value === true || value === "true")
             } else {
                 el.val(value)
             }
@@ -54,16 +54,15 @@
             $('#spinner').show();
             $('#result').hide();
 
-            const params = $.param({
-                who: $('#who').val(),
-                prompt: $('#prompt').val(),
-                bedtime: $('#bedtime').is(':checked'),
-                include_child: $('#include_child').is(':checked'),
-                generate_audio: $('#generate_audio').is(':checked'),
-                generate_images: $('#generate_images').is(':checked')
-            });
+            const params = {};
+            for (const id in inputs) {
+                const el = $(`#${id}`)
+                const value = el.is(':checkbox') ? el.is(":checked") : el.val()
+                localStorage.setItem(id, value)
+                params[id] = value
+            }
 
-            $.getJSON(`/story?${params}`)
+            $.getJSON(`/story?${$.param(params)}`)
                 .done((res) => {
                     $('#spinner').hide();
                     $('#story').html(res.story);
