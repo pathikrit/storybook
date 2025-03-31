@@ -2,18 +2,18 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8">
-    <title>Create Story</title>
+    <title>Story Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.min.css">
 </head>
 <body>
 <main>
-    <h1>Story Generator</h1>
+    <h1>Create story</h1>
     <form id="form">
         <label for="who">Who:</label>
         <input type="text" id="who" name="who" required>
-        <label for="prompt">Prompt:</label>
-        <textarea id="prompt" name="prompt" rows="4" required></textarea>
+        <label for="prompt">Prompt</label>
+        <textarea id="prompt" name="prompt" rows="2" required></textarea>
         <fieldset>
             <input type="checkbox" id="bedtime" name="bedtime" role="switch">
             <label htmlFor="bedtime">Bedtime mode (calm voice)</label>
@@ -38,7 +38,7 @@
     </div>
 </main>
 <script>
-    inputs = {
+    const inputs = {
         who: "3-yr old boy named Aidan",
         prompt: "Colorful bison and a monster truck",
         bedtime: false,
@@ -47,46 +47,53 @@
         generate_images: true
     }
 
-    $(document).ready(() => {
+    update_defaults = () => {
         for (const [id, default_value] of Object.entries(inputs)) {
-            const el = $(`#${id}`)
             const value = localStorage.getItem(id) ?? default_value
+            const el = $(`#${id}`)
             if (el.is(':checkbox')) {
                 el.prop('checked', value === true || value === "true")
             } else {
                 el.val(value)
             }
         }
+    }
 
-        $('#form').on('submit', (event) => {
-            event.preventDefault();
+    read_inputs = () => {
+        const params = {}
+        for (const id in inputs) {
+            const el = $(`#${id}`)
+            const value = el.is(':checkbox') ? el.is(":checked") : el.val()
+            localStorage.setItem(id, value)
+            params[id] = value
+        }
+        return params
+    }
 
-            $('#spinner').show();
-            $('#result').hide();
+    submit_form = (event) => {
+        event.preventDefault()
 
-            const params = {};
-            for (const id in inputs) {
-                const el = $(`#${id}`)
-                const value = el.is(':checkbox') ? el.is(":checked") : el.val()
-                localStorage.setItem(id, value)
-                params[id] = value
+        $('#spinner').show()
+        $('#result').hide()
+
+        $.get('/story', read_inputs(), (res) => {
+            $('#story').html(res.story)
+            if (res.audio_uri) {
+                $('#audio')
+                    .attr('src', res.audio_uri)
+                    .attr('autoplay', true)
+                    .show()
+            } else {
+                $('#audio').hide()
             }
+            $('#spinner').hide()
+            $('#result').show()
+        })
+    }
 
-            $.getJSON(`/story?${$.param(params)}`)
-                .done((res) => {
-                    $('#story').html(res.story);
-                    if (res.audio_uri) {
-                        $('#audio')
-                            .attr('src', res.audio_uri)
-                            .attr('autoplay', true)
-                            .show();
-                    } else {
-                        $('#audio').hide();
-                    }
-                    $('#spinner').hide();
-                    $('#result').show()
-                })
-        });
+    $(document).ready(() => {
+        update_defaults()
+        $('#form').on('submit', submit_form);
     });
 </script>
 </body>
