@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" color-mode="user">
 <head>
     <meta charset="utf-8">
     <title>Create Story</title>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mvp.css/1.14.0/mvp.css"/>
 </head>
 <body>
 <h1>Make Story</h1>
@@ -48,7 +49,10 @@
                     $('#spinner').hide();
                     $('#story').html(res.story);
                     if (res.audio_uri) {
-                        $('#audio').attr('src', res.audio_uri).show();
+                        $('#audio')
+                            .attr('src', res.audio_uri)
+                            .attr('autoplay', true)
+                            .show();
                     } else {
                         $('#audio').hide();
                     }
