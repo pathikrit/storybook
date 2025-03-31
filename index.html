@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <title>Story Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.min.css">
+    <style>
+        audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Create story</h1>
+    <form id="form">
+        <label for="who">Who:</label>
+        <input type="text" id="who" name="who" required>
+        <label for="prompt">Prompt:</label>
+        <textarea id="prompt" name="prompt" rows="2" required></textarea>
+        <fieldset>
+            <input type="checkbox" id="bedtime" name="bedtime" role="switch">
+            <label htmlFor="bedtime">Bedtime mode (calm voice)</label>
+
+            <input type="checkbox" id="include_child" name="include_child" role="switch">
+            <label htmlFor="include_child">Include child in story</label>
+
+            <input type="checkbox" id="generate_audio" name="generate_audio" role="switch">
+            <label htmlFor="generate_audio">Read story aloud</label>
+
+            <input type="checkbox" id="generate_images" name="generate_images" role="switch">
+            <label htmlFor="generate_images">Add images to story</label>
+        </fieldset>
+        <button type="submit" id="make_story_button">Make Story</button>
+    </form>
+    <div id="result"></div>
+</main>
+<script>
+    const inputs = {
+        who: "3-yr old boy named Aidan",
+        prompt: "Colorful bison and a monster truck",
+        bedtime: false,
+        include_child: true,
+        generate_audio: true,
+        generate_images: true
+    }
+
+    const update_defaults = () => {
+        for (const [id, default_value] of Object.entries(inputs)) {
+            const value = localStorage.getItem(id) ?? default_value
+            const el = $(`#${id}`)
+            if (el.is(':checkbox')) {
+                el.prop('checked', value === true || value === "true")
+            } else {
+                el.val(value)
+            }
+        }
+    }
+
+    const read_inputs = () => {
+        const params = {}
+        for (const id in inputs) {
+            const el = $(`#${id}`)
+            const value = el.is(':checkbox') ? el.is(":checked") : el.val()
+            localStorage.setItem(id, value)
+            params[id] = value
+        }
+        return params
+    }
+
+    $(document).ready(() => {
+        update_defaults()
+        $('#form').on('submit', (event) => {
+            event.preventDefault()
+            const output = $('#result')
+            output.html('<span aria-busy="true">Writing story...</span>')
+            $.get('/story', read_inputs(), (res) => {
+                output.html(`<article>${res.story}</article>`)
+                if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
+            })
+        });
+    });
+</script>
+</body>
+</html>
