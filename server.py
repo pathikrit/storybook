@@ -5,6 +5,8 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+
 from pydantic import BaseModel, Field
 
 from ai import ask_ai
@@ -19,13 +21,17 @@ class ImageTag(BaseModel):
 class Story(BaseModel):
     file_name: str = Field(description="File name (without extension) to export this story to a html file")
     title: str = Field(description="Title of the story")
-    html: str = Field(description="The story in HTML which would go inside a div")
+    html: str = Field(description="The story in HTML which would go inside a div (include the title)")
     images: List[ImageTag] = Field(description="The images for the story")
 
 app = FastAPI()
 
+@app.get("/")
+async def home():
+    return FileResponse('index.html')
+
 @app.get("/story")
-def get_story(
+def story(
         who: str,
         prompt: str,
         bedtime: bool = False,

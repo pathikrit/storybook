@@ -1,36 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>${story.title}</title>
-    <style>
-        html, body {
-            background-color: #121212;
-            color: #e0e0e0;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-
-        audio {
-            margin: 20px 0;
-            width: 100%;
-        }
-
-        hr {
-            border: 1px solid #333;
-        }
-    </style>
+    <title>Create Story</title>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 </head>
 <body>
-% if b64_audio:
-<div>
-    <audio controls>
-        <source src="data:audio/mp3;base64,${b64_audio}" type="audio/mp3">
-        Your browser does not support the audio element.
-    </audio>
+<h1>Make Story</h1>
+<form id="form">
+    <label for="who">Who:</label>
+    <input type="text" id="who" name="who" required>
+    <label for="prompt">Prompt:</label>
+    <textarea id="prompt" name="prompt" rows="4" required></textarea>
+    <label><input type="checkbox" id="bedtime" name="bedtime">Bedtime?</label>
+    <label><input type="checkbox" id="include_child" name="include_child">Include Child?</label>
+    <label><input type="checkbox" id="generate_audio" name="generate_audio">Generate Audio?</label>
+    <label><input type="checkbox" id="generate_images" name="generate_images">Generate Images?</label>
+    <button type="submit" id="make_story_button">Make Story</button>
+</form>
+
+<div id="spinner" style="display:none;">Writing story...</div>
+
+<div id="result" style="display:none;">
+    <audio id="audio" controls style="display:none;"></audio>
+    <div id="story"></div>
 </div>
-<hr>
-% endif
-<div>${story.html | n}</div>
+
+<script>
+    $(document).ready(() => {
+        $('#form').on('submit', (event) => {
+            event.preventDefault();
+
+            $('#spinner').show();
+            $('#result').hide();
+
+            const params = $.param({
+                who: $('#who').val(),
+                prompt: $('#prompt').val(),
+                bedtime: $('#bedtime').is(':checked'),
+                include_child: $('#include_child').is(':checked'),
+                generate_audio: $('#generate_audio').is(':checked'),
+                generate_images: $('#generate_images').is(':checked')
+            });
+
+            $.getJSON(`/story?${params}`)
+                .done((res) => {
+                    $('#spinner').hide();
+                    $('#story').html(res.story);
+                    if (res.audio_uri) {
+                        $('#audio').attr('src', res.audio_uri).show();
+                    } else {
+                        $('#audio').hide();
+                    }
+                    $('#result').show()
+                })
+        });
+    });
+</script>
 </body>
 </html>
