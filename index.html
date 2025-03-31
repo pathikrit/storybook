@@ -14,8 +14,8 @@
 </head>
 <body>
 <main>
-    <h1>Create story</h1>
     <form id="form">
+        <h1>Create story</h1>
         <label for="who">Who:</label>
         <input type="text" id="who" name="who" required>
         <label for="prompt">Prompt:</label>
@@ -38,7 +38,7 @@
     <div id="result"></div>
 </main>
 <script>
-    const inputs = {
+    const default_inputs = {
         who: "3-yr old boy named Aidan",
         prompt: "Colorful bison and a monster truck",
         bedtime: false,
@@ -48,7 +48,7 @@
     }
 
     const update_defaults = () => {
-        for (const [id, default_value] of Object.entries(inputs)) {
+        for (const [id, default_value] of Object.entries(default_inputs)) {
             const value = localStorage.getItem(id) ?? default_value
             const el = $(`#${id}`)
             if (el.is(':checkbox')) {
@@ -61,7 +61,7 @@
 
     const read_inputs = () => {
         const params = {}
-        for (const id in inputs) {
+        for (const id in default_inputs) {
             const el = $(`#${id}`)
             const value = el.is(':checkbox') ? el.is(":checked") : el.val()
             localStorage.setItem(id, value)
@@ -70,18 +70,39 @@
         return params
     }
 
+    const download = (file_name) => {
+        const clone = $("html").clone()
+        for (const selector of ["#form", "#download"]) {
+            clone.find(selector).remove()
+        }
+        clone.find("#form").remove()
+        clone.find("#download").remove()
+        const blob = new Blob([clone[0].outerHTML], {type: "text/html"})
+        const url = URL.createObjectURL(blob)
+        const link = $("<a>")
+            .attr("href", url)
+            .attr("download", file_name)
+            .appendTo("body")
+        link[0].click()
+        link.remove()
+        URL.revokeObjectURL(url)
+    }
+
+    const submit = (event) => {
+        event.preventDefault()
+        const output = $('#result')
+        output.html('<span aria-busy="true">Writing story...</span>')
+        $.get('/story', read_inputs(), (res) => {
+            output.html(`<article>${res.story}</article>`)
+            if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
+            output.prepend(`<button id="download" onclick="download('${res.file_name}')">Download Story</button>`)
+        })
+    }
+
     $(document).ready(() => {
         update_defaults()
-        $('#form').on('submit', (event) => {
-            event.preventDefault()
-            const output = $('#result')
-            output.html('<span aria-busy="true">Writing story...</span>')
-            $.get('/story', read_inputs(), (res) => {
-                output.html(`<article>${res.story}</article>`)
-                if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
-            })
-        });
-    });
+        $('#form').on('submit', submit)
+    })
 </script>
 </body>
 </html>
