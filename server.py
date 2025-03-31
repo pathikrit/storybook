@@ -1,9 +1,11 @@
 import base64
+import os
 import uuid
 from typing import List, ClassVar
 import re
 from concurrent.futures import ThreadPoolExecutor
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
@@ -24,11 +26,14 @@ class Story(BaseModel):
     html: str = Field(description="The story in HTML which would go inside a div (include the title)")
     images: List[ImageTag] = Field(description="The images for the story")
 
+
 app = FastAPI()
+
 
 @app.get("/")
 async def home():
     return FileResponse('index.html')
+
 
 @app.get("/story")
 def story(
@@ -83,7 +88,7 @@ def story(
         parallel_tasks = []
 
         if generate_images:
-            consistent_style_id=uuid.uuid4().hex
+            consistent_style_id = uuid.uuid4().hex
             for image in story.images:
                 task = lambda img=image: (make_image(prompt=prompt, consistent_style_id=consistent_style_id), img.id)
                 parallel_tasks.append(executor.submit(task))
@@ -109,3 +114,7 @@ def story(
         "story": story.html,
         "audio_uri": audio_uri
     }
+
+
+if os.environ.get("RENDER"):
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT")))
