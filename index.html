@@ -5,6 +5,12 @@
     <title>Story Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.min.css">
+    <style>
+        audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
 <main>
@@ -12,7 +18,7 @@
     <form id="form">
         <label for="who">Who:</label>
         <input type="text" id="who" name="who" required>
-        <label for="prompt">Prompt</label>
+        <label for="prompt">Prompt:</label>
         <textarea id="prompt" name="prompt" rows="2" required></textarea>
         <fieldset>
             <input type="checkbox" id="bedtime" name="bedtime" role="switch">
@@ -29,13 +35,7 @@
         </fieldset>
         <button type="submit" id="make_story_button">Make Story</button>
     </form>
-
-    <span id="spinner" aria-busy="true" style="display:none;">Writing story...</span>
-
-    <div id="result" style="display:none;">
-        <audio id="audio" controls style="display:none;"></audio>
-        <article id="story"></article>
-    </div>
+    <div id="result"></div>
 </main>
 <script>
     const inputs = {
@@ -72,22 +72,11 @@
 
     submit_form = (event) => {
         event.preventDefault()
-
-        $('#spinner').show()
-        $('#result').hide()
-
+        const output = $('#result')
+        output.html('<span aria-busy="true">Writing story...</span>')
         $.get('/story', read_inputs(), (res) => {
-            $('#story').html(res.story)
-            if (res.audio_uri) {
-                $('#audio')
-                    .attr('src', res.audio_uri)
-                    .attr('autoplay', true)
-                    .show()
-            } else {
-                $('#audio').hide()
-            }
-            $('#spinner').hide()
-            $('#result').show()
+            output.html(`<article>${res.story}</article>`)
+            if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
         })
     }
 
