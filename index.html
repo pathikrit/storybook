@@ -28,7 +28,26 @@
 </div>
 
 <script>
+    defaults = {
+        who: "3-yr old boy named Aidan",
+        prompt: "Colorful bison and a monster truck",
+        bedtime: false,
+        include_child: true,
+        generate_audio: true,
+        generate_images: true
+    }
+
     $(document).ready(() => {
+        for (const [id, default_value] of Object.entries(defaults)) {
+            const el = $(`#${id}`)
+            const value = localStorage.getItem(id) ?? default_value
+            if (el.is(':checkbox')) {
+                el.prop('checked', value)
+            } else {
+                el.val(value)
+            }
+        }
+
         $('#form').on('submit', (event) => {
             event.preventDefault();
 
