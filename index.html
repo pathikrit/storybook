@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Story Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.violet.min.css">
+    <link id="picocss" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.min.css">
     <style>
         audio {
             width: 100%;
@@ -101,6 +101,10 @@
 
     $(document).ready(() => {
         update_defaults()
+        $('#bedtime').on('change', () => {
+            const theme = $("#bedtime").is(":checked") ? "violet" : "pumpkin";
+            $("#picocss").attr("href", `https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.${theme}.min.css`);
+        })
         $('#form').on('submit', submit)
     })
 </script>
