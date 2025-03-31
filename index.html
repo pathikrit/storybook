@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" color-mode="user">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <title>Create Story</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.fluid.classless.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.min.css">
 </head>
 <body>
 <main>
@@ -14,10 +14,19 @@
         <input type="text" id="who" name="who" required>
         <label for="prompt">Prompt:</label>
         <textarea id="prompt" name="prompt" rows="4" required></textarea>
-        <label><input type="checkbox" id="bedtime" name="bedtime">Bedtime?</label>
-        <label><input type="checkbox" id="include_child" name="include_child">Include Child?</label>
-        <label><input type="checkbox" id="generate_audio" name="generate_audio">Generate Audio?</label>
-        <label><input type="checkbox" id="generate_images" name="generate_images">Generate Images?</label>
+        <fieldset>
+            <input type="checkbox" id="bedtime" name="bedtime" role="switch">
+            <label htmlFor="bedtime">Bedtime mode (calm voice)</label>
+
+            <input type="checkbox" id="include_child" name="include_child" role="switch">
+            <label htmlFor="include_child">Include child in story</label>
+
+            <input type="checkbox" id="generate_audio" name="generate_audio" role="switch">
+            <label htmlFor="generate_audio">Read story aloud</label>
+
+            <input type="checkbox" id="generate_images" name="generate_images" role="switch">
+            <label htmlFor="generate_images">Add images to story</label>
+        </fieldset>
         <button type="submit" id="make_story_button">Make Story</button>
     </form>
 
@@ -25,7 +34,7 @@
 
     <div id="result" style="display:none;">
         <audio id="audio" controls style="display:none;"></audio>
-        <div id="story"></div>
+        <article id="story"></article>
     </div>
 </main>
 <script>
