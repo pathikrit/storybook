@@ -25,7 +25,7 @@
         {name: "bedtime", label: "Bedtime mode (calm voice)", defaultValue: false, type: "checkbox"},
         {name: "include_child", label: "Include child in story", defaultValue: true, type: "checkbox"},
         {name: "generate_audio", label: "Read story aloud", defaultValue: true, type: "checkbox"},
-        {name: "generate_images", label: "Add images to story", defaultValue: true, type: "checkbox"}
+        {name: "generate_images", label: "Draw images", defaultValue: true, type: "checkbox"}
     ]
 
     const createInputs = () => {
@@ -36,8 +36,8 @@
             const inputElmt = $(`<input type="${input.type}" id="${input.name}" name="${input.name}">`)
             switch (input.type) {
                 case "text":
-                    form.append(labelElmt.prop("required", true))
-                    form.append(inputElmt.val(value))
+                    form.append(labelElmt)
+                    form.append(inputElmt.prop("required", true).val(value))
                     break
                 case "checkbox":
                     form.append(inputElmt.prop("checked", value === true || value === "true").prop("role", "switch"))
