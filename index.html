@@ -40,8 +40,8 @@
                     form.append(inputElmt.val(value))
                     break
                 case "checkbox":
-                    form.append(inputElmt.prop("checked", value === true || value === "true"))
-                    form.append(labelElmt.prop("role", "switch"))
+                    form.append(inputElmt.prop("checked", value === true || value === "true").prop("role", "switch"))
+                    form.append(labelElmt)
                     break
             }
         })
@@ -59,19 +59,11 @@
         return params
     }
 
-    const download = (fileName) => {
+    const downloadUrl = () => {
         const clone = $("html").clone()
         clone.find("main").html($('#result').html())
-        clone.find("#download").remove()
         const blob = new Blob([clone[0].outerHTML], {type: "text/html"})
-        const url = URL.createObjectURL(blob)
-        const link = $("<a>")
-            .attr("href", url)
-            .attr("download", fileName)
-            .appendTo("body")
-        link[0].click()
-        link.remove()
-        URL.revokeObjectURL(url)
+        return URL.createObjectURL(blob)
     }
 
     const submit = (event) => {
@@ -81,7 +73,7 @@
         $.get('/story', readInputs(), (res) => {
             output.html(`<article>${res.story}</article>`)
             if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
-            output.prepend(`<button id="download" onclick="download('${res.file_name}')">Download Story</button>`)
+            output.prepend(`<a href="${downloadUrl()}" download="${res.file_name}" role="button">Download Story</a>`)
             button.prop("disabled", false).removeAttr("aria-busy").text("Make Story")
         })
     }
