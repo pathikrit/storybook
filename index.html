@@ -15,7 +15,9 @@
 <body>
 <main>
     <h1>Create story</h1>
-    <form id="form"></form>
+    <form id="form">
+        <button id="submit" type="submit">Make Story</button>
+    </form>
     <div id="result"></div>
 </main>
 <script>
@@ -29,23 +31,18 @@
     ]
 
     const createInputs = () => {
-        const form = $('#form')
-        inputs.forEach((input) => {
+        inputs.reverse().map((input) => {
             const value = localStorage.getItem(input.name) ?? input.defaultValue
-            const labelElmt = $(`<label for="${input.name}">${input.label}</label>`)
             const inputElmt = $(`<input type="${input.type}" id="${input.name}" name="${input.name}">`)
             switch (input.type) {
                 case "text":
-                    form.append(labelElmt)
-                    form.append(inputElmt.prop("required", true).val(value))
-                    break
+                    inputElmt.prop("required", true).val(value)
+                    return $(`<label></label>`).append(input.label).append(inputElmt)
                 case "checkbox":
-                    form.append(inputElmt.prop("checked", value === true || value === "true").prop("role", "switch"))
-                    form.append(labelElmt)
-                    break
+                    inputElmt.prop("checked", value === true || value === "true").prop("role", "switch")
+                    return $(`<label></label>`).append(inputElmt).append(input.label)
             }
-        })
-        form.append(`<button id="submit" type="submit">Make Story</button>`)
+        }).forEach(label => $('#form').prepend(label))
     }
 
     const readInputs = () => {
