@@ -76,23 +76,25 @@
 
     const submit = (event) => {
         event.preventDefault()
-        const button = $('#submit').prop("disabled", true).attr("aria-busy", "true").text("Writing Story ...");
+        const button = $('#submit').prop("disabled", true).attr("aria-busy", true).text("Writing Story ...")
         const output = $('#result').empty()
         $.get('/story', readInputs(), (res) => {
             output.html(`<article>${res.story}</article>`)
             if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
             output.prepend(`<button id="download" onclick="download('${res.file_name}')">Download Story</button>`)
-            button.removeAttr("aria-busy").prop("disabled", false).text("Make Story")
+            button.prop("disabled", false).removeAttr("aria-busy").text("Make Story")
         })
+    }
+
+    const changeColor = (color) => {
+        const css = $("#picocss").attr("href")
+        $("#picocss").attr("href", css.replace(/classless.*min/, `classless.${color}.min`))
     }
 
     $(document).ready(() => {
         createInputs()
-        $('#bedtime').on('change', () => {
-            const theme = $("#bedtime").is(":checked") ? "violet" : "pumpkin";
-            $("#picocss").attr("href", `https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.${theme}.min.css`);
-        })
         $('#form').on('submit', submit)
+        $('#bedtime').on('change', () => changeColor($("#bedtime").is(":checked") ? "violet" : "pumpkin"))
     })
 </script>
 </body>
