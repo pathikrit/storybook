@@ -20,8 +20,8 @@
 </main>
 <script>
     const inputs = [
-        {name: "who", label: "Who:", defaultValue: "3-yr old boy named Aidan", type: "text"},
-        {name: "prompt", label: "Prompt:", defaultValue: "Colorful bison and a monster truck", type: "text"},
+        {name: "who", label: "Who", defaultValue: "3-yr old boy named Aidan", type: "text"},
+        {name: "prompt", label: "Prompt", defaultValue: "Colorful bison and a monster truck", type: "text"},
         {name: "bedtime", label: "Bedtime mode (calm voice)", defaultValue: false, type: "checkbox"},
         {name: "include_child", label: "Include child in story", defaultValue: true, type: "checkbox"},
         {name: "generate_audio", label: "Read story aloud", defaultValue: true, type: "checkbox"},
@@ -61,9 +61,8 @@
 
     const download = (fileName) => {
         const clone = $("html").clone()
-        for (const selector of ["#header", "#form", "#download"]) {
-            clone.find(selector).remove()
-        }
+        clone.find("main").html($('#result').html())
+        clone.find("#download").remove()
         const blob = new Blob([clone[0].outerHTML], {type: "text/html"})
         const url = URL.createObjectURL(blob)
         const link = $("<a>")
