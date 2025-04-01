@@ -15,56 +15,47 @@
 <body>
 <main>
     <h1 id="header">Create story</h1>
-    <form id="form">
-        <label for="who">Who:</label>
-        <input type="text" id="who" name="who" required>
-        <label for="prompt">Prompt:</label>
-        <textarea id="prompt" name="prompt" rows="2" required></textarea>
-        <input type="checkbox" id="bedtime" name="bedtime" role="switch">
-        <label htmlFor="bedtime">Bedtime mode (calm voice)</label>
-
-        <input type="checkbox" id="include_child" name="include_child" role="switch">
-        <label htmlFor="include_child">Include child in story</label>
-
-        <input type="checkbox" id="generate_audio" name="generate_audio" role="switch">
-        <label htmlFor="generate_audio">Read story aloud</label>
-
-        <input type="checkbox" id="generate_images" name="generate_images" role="switch">
-        <label htmlFor="generate_images">Add images to story</label>
-        <button type="submit" id="make_story_button">Make Story</button>
-    </form>
+    <form id="form"></form>
     <div id="result"></div>
 </main>
 <script>
-    const defaultInputs = {
-        who: "3-yr old boy named Aidan",
-        prompt: "Colorful bison and a monster truck",
-        bedtime: false,
-        include_child: true,
-        generate_audio: true,
-        generate_images: true
-    }
+    const inputs = [
+        {name: "who", label: "Who:", defaultValue: "3-yr old boy named Aidan", type: "text"},
+        {name: "prompt", label: "Prompt:", defaultValue: "Colorful bison and a monster truck", type: "text"},
+        {name: "bedtime", label: "Bedtime mode (calm voice)", defaultValue: false, type: "checkbox"},
+        {name: "include_child", label: "Include child in story", defaultValue: true, type: "checkbox"},
+        {name: "generate_audio", label: "Read story aloud", defaultValue: true, type: "checkbox"},
+        {name: "generate_images", label: "Add images to story", defaultValue: true, type: "checkbox"}
+    ]
 
-    const update_defaults = () => {
-        for (const [id, default_value] of Object.entries(defaultInputs)) {
-            const value = localStorage.getItem(id) ?? default_value
-            const el = $(`#${id}`)
-            if (el.is(':checkbox')) {
-                el.prop('checked', value === true || value === "true")
-            } else {
-                el.val(value)
+    const createInputs = () => {
+        const form = $('#form')
+        inputs.forEach((input) => {
+            const value = localStorage.getItem(input.name) ?? input.defaultValue
+            const labelElmt = $(`<label for="${input.name}">${input.label}</label>`)
+            const inputElmt = $(`<input type="${input.type}" id="${input.name}" name="${input.name}">`)
+            switch (input.type) {
+                case "text":
+                    form.append(labelElmt.prop("required", true))
+                    form.append(inputElmt.val(value))
+                    break
+                case "checkbox":
+                    form.append(inputElmt.prop("checked", value === true || value === "true"))
+                    form.append(labelElmt.prop("role", "switch"))
+                    break
             }
-        }
+        })
+        form.append(`<button type="submit" id="make_story_button">Make Story</button>`)
     }
 
     const readInputs = () => {
         const params = {}
-        for (const id in defaultInputs) {
-            const el = $(`#${id}`)
-            const value = el.is(':checkbox') ? el.is(":checked") : el.val()
-            localStorage.setItem(id, value)
-            params[id] = value
-        }
+        inputs.forEach((input) => {
+            const el = $(`#${input.name}`)
+            const value = input.type === "checkbox" ? el.is(":checked") : el.val()
+            localStorage.setItem(input.name, value)
+            params[input.name] = value
+        })
         return params
     }
 
@@ -73,8 +64,6 @@
         for (const selector of ["#header", "#form", "#download"]) {
             clone.find(selector).remove()
         }
-        clone.find("#form").remove()
-        clone.find("#download").remove()
         const blob = new Blob([clone[0].outerHTML], {type: "text/html"})
         const url = URL.createObjectURL(blob)
         const link = $("<a>")
@@ -98,7 +87,7 @@
     }
 
     $(document).ready(() => {
-        update_defaults()
+        createInputs()
         $('#bedtime').on('change', () => {
             const theme = $("#bedtime").is(":checked") ? "violet" : "pumpkin";
             $("#picocss").attr("href", `https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.classless.${theme}.min.css`);
