@@ -16,7 +16,7 @@
 <main>
     <h1>
         Story Maker
-        <a class="github-link" href="https://github.com/pathikrit/storybook" target="_blank" rel="noopener" style="float: right;">
+        <a href="https://github.com/pathikrit/storybook" target="_blank" rel="noopener" style="float: right;">
             <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" width="30" height="30">
         </a>
     </h1>
@@ -47,14 +47,13 @@
     }
 
     const readInputs = () => {
-        const params = {}
-        inputs.forEach((input) => {
+        const params = inputs.map((input) => {
             const el = $(`#${input.name}`)
             const value = input.type === "checkbox" ? el.is(":checked") : el.val()
             localStorage.setItem(input.name, value)
-            params[input.name] = value
+            return [input.name, value]
         })
-        return params
+        return Object.fromEntries(params)
     }
 
     const downloadUrl = () => {
