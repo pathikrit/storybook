@@ -4,6 +4,7 @@ import uuid
 from typing import List, ClassVar
 import re
 from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 
 import uvicorn
 from fastapi import FastAPI
@@ -36,6 +37,7 @@ async def home():
 
 
 @app.get("/story")
+@lru_cache(maxsize=10)
 def story(
         who: str,
         prompt: str,
