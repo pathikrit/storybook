@@ -14,10 +14,8 @@
 </head>
 <body>
 <main>
-    <h1>Create story</h1>
-    <form id="form">
-        <button id="submit" type="submit">Make Story</button>
-    </form>
+    <h1>Story Maker</h1>
+    <form id="form"></form>
     <div id="result"></div>
 </main>
 <script>
@@ -30,19 +28,17 @@
         {name: "generate_images", label: "Draw images", defaultValue: true, type: "checkbox"}
     ]
 
-    const createInputs = () => {
-        inputs.reverse().map((input) => {
-            const value = localStorage.getItem(input.name) ?? input.defaultValue
-            const inputElmt = $(`<input type="${input.type}" id="${input.name}" name="${input.name}">`)
-            switch (input.type) {
-                case "text":
-                    inputElmt.prop("required", true).val(value)
-                    return $(`<label></label>`).append(input.label).append(inputElmt)
-                case "checkbox":
-                    inputElmt.prop("checked", value === true || value === "true").prop("role", "switch")
-                    return $(`<label></label>`).append(inputElmt).append(input.label)
-            }
-        }).forEach(label => $('#form').prepend(label))
+    const makeInput = (input) => {
+        const value = localStorage.getItem(input.name) ?? input.defaultValue
+        const inputElmt = $(`<input type="${input.type}" id="${input.name}" name="${input.name}">`)
+        switch (input.type) {
+            case "text":
+                inputElmt.prop("required", true).val(value)
+                return $(`<label></label>`).append(input.label).append(inputElmt)
+            case "checkbox":
+                inputElmt.prop("checked", value === true || value === "true").prop("role", "switch")
+                return $(`<label></label>`).append(inputElmt).append(input.label)
+        }
     }
 
     const readInputs = () => {
@@ -68,8 +64,8 @@
         const button = $('#submit').prop("disabled", true).attr("aria-busy", true).text("Writing Story ...")
         const output = $('#result').empty()
         $.get('/story', readInputs(), (res) => {
-            output.html(`<article>${res.story}</article>`)
-            if (res.audio_uri) output.prepend(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
+            if (res.audio_uri) output.append(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
+            output.append(`<article>${res.story}</article>`)
             output.prepend(`<a href="${downloadUrl()}" download="${res.file_name}" role="button">Download Story</a>`)
             button.prop("disabled", false).removeAttr("aria-busy").text("Make Story")
         })
@@ -81,8 +77,8 @@
     }
 
     $(document).ready(() => {
-        createInputs()
-        $('#form').on('submit', submit)
+        inputs.map(makeInput).forEach(label => $('#form').append(label))
+        $('#form').append('<button id="submit" type="submit">Make Story</button>').on('submit', submit)
         $('#bedtime').on('change', () => changeColor($("#bedtime").is(":checked") ? "violet" : "pumpkin"))
     })
 </script>
