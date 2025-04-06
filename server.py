@@ -53,9 +53,10 @@ def story(
             "Include the child in the story also" if include_child else "No need to include the child in the story",
             "Return the story as html (which would go inside div)",
             "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
-            "<img src='[[replace_image_1]]' hidden>"
+            "<img src='[[replace_image_1]]' hidden>",
             "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
-            "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images"
+            "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images",
+            "Ideally, I would like one image at the start to set the scene for the story and one towards the end of the story concluding it",
             "Always bring the story to a meaningful closure and end with 'THE END'"
         ],
         prompt=prompt,
