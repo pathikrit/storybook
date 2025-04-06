@@ -1,10 +1,12 @@
 from openai import OpenAI
+from tenacity import retry, stop_after_attempt
+
 from dotenv import load_dotenv
 
 load_dotenv()
 client = OpenAI()
 
-
+@retry(stop=stop_after_attempt(3))
 def ask_ai(
         model: str,
         instructions: list[str],
