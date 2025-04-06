@@ -68,13 +68,17 @@
         $("#form :input").prop('disabled', true)
         const button = $('#submit').attr("aria-busy", true).text("Writing Story ...")
         const output = $('#result').empty()
-        $.get('/story', readInputs(), (res) => {
-            if (res.audio_uri) output.append(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
-            output.append(`<article>${res.story}</article>`)
-            output.prepend(`<a href="${downloadUrl()}" download="${res.file_name}" role="button">Download Story</a>`)
-            button.removeAttr("aria-busy").text("Make Story")
-            $("#form :input").prop('disabled', false)
-        })
+        $.get('/story', readInputs())
+            .done((res) => {
+                if (res.audio_uri) output.append(`<audio controls autoplay src="${res.audio_uri}"></audio>`)
+                output.append(`<article>${res.story}</article>`)
+                output.prepend(`<a href="${downloadUrl()}" download="${res.file_name}" role="button">Download Story</a>`)
+            })
+            .fail((xhr, status) => $output.html(`<code>Error: ${xhr.responseText ?? status}</code>`))
+            .always(() => {
+                button.removeAttr("aria-busy").text("Make Story")
+                $("#form :input").prop('disabled', false)
+            })
     }
 
     const changeColor = (color) => {
