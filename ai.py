@@ -28,10 +28,6 @@ def ask_ai(
             return response.choices[0].message.parsed
 
         case "dall-e-2" | "dall-e-3":
-            consistent_style_id = kwargs.get("consistent_style_id")
-            if consistent_style_id:
-                del kwargs["consistent_style_id"]
-                instructions.insert(0, f"Use gen id = {consistent_style_id}")
             instructions.append(prompt)
             response = client.images.generate(
                 model=model,

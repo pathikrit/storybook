@@ -1,6 +1,5 @@
 import base64
 import os
-import uuid
 from typing import List, ClassVar
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -17,7 +16,7 @@ from ai import ask_ai
 
 class ImageTag(BaseModel):
     id: int = Field(description="Image id starting from 1 - I will use this to replace the [[replace_image_X]] tags")
-    prompt: str = Field(description="The short prompt for the image that I will feed to the image generation API")
+    prompt: str = Field(description="The prompt for the image that I will feed to the image generation API")
     size: ClassVar[int] = 1024
 
 
@@ -55,6 +54,7 @@ def story(
             "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
             "<img src='[[replace_image_1]]' hidden>",
             "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
+            "Every image prompt must include detailed descriptions of the story characters to allow similar character generation by AI"
             "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images",
             "Ideally, I would like one image at the start to set the scene for the story and one towards the end of the story concluding it",
             "Always bring the story to a meaningful closure and end with 'THE END'"
@@ -63,14 +63,13 @@ def story(
         response_format=Story
     )
 
-    def make_image(prompt: str, consistent_style_id: str):
+    def make_image(prompt: str):
         return ask_ai(
             model="dall-e-3",
             instructions=[f"Generate a Studio Ghibli style story book watercolor image for the given prompt"],
             prompt=prompt,
             response_format="b64_json",
-            size=f"{ImageTag.size}x{ImageTag.size}",
-            consistent_style_id=consistent_style_id
+            size=f"{ImageTag.size}x{ImageTag.size}"
         )
 
     def make_audio():
@@ -91,9 +90,8 @@ def story(
         parallel_tasks = []
 
         if generate_images:
-            consistent_style_id = uuid.uuid4().hex
             for image in story.images:
-                task = lambda img=image: (make_image(prompt=prompt, consistent_style_id=consistent_style_id), img.id)
+                task = lambda img=image: (make_image(prompt), img.id)
                 parallel_tasks.append(executor.submit(task))
 
         if generate_audio:
