@@ -57,7 +57,7 @@
     }
 
     const downloadUrl = () => {
-        const clone = $("html").clone()
+        const clone = $('html').clone()
         clone.find("main").html($('#result').html())
         const blob = new Blob([clone[0].outerHTML], {type: "text/html"})
         return URL.createObjectURL(blob)
@@ -65,7 +65,7 @@
 
     const submit = (event) => {
         event.preventDefault()
-        $("#form :input").prop('disabled', true)
+        $('#form :input').prop('disabled', true)
         const button = $('#submit').attr("aria-busy", true).text("Writing Story ...")
         const output = $('#result').empty()
         $.get('/story', readInputs())
@@ -77,19 +77,19 @@
             .fail((xhr, status) => $output.html(`<code>Error: ${xhr.responseText ?? status}</code>`))
             .always(() => {
                 button.removeAttr("aria-busy").text("Make Story")
-                $("#form :input").prop('disabled', false)
+                $('#form :input').prop('disabled', false)
             })
     }
 
     const changeColor = (color) => {
-        const css = $("#picocss").attr("href")
-        $("#picocss").attr("href", css.replace(/classless.*min/, `classless.${color}.min`))
+        const css = $('#picocss').attr("href")
+        $('#picocss').attr("href", css.replace(/classless.*min/, `classless.${color}.min`))
     }
 
     $(document).ready(() => {
         inputs.map(makeInput).forEach(label => $('#form').append(label))
         $('#form').append('<button id="submit" type="submit">Make Story</button>').on('submit', submit)
-        $('#bedtime').on('change', () => changeColor($("#bedtime").is(":checked") ? "violet" : "pumpkin"))
+        $('#bedtime').on('change', () => changeColor($('#bedtime').is(":checked") ? "violet" : "pumpkin"))
     })
 </script>
 </body>
