@@ -15,7 +15,7 @@ def ask_ai(
         **kwargs
 ):
     match model:
-        case "gpt-4o-mini":
+        case "gpt-4o-mini" | "gpt-4.1-nano":
             response = client.beta.chat.completions.parse(
                 model=model,
                 response_format=response_format,

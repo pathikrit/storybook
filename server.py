@@ -47,7 +47,7 @@ def story(
         generate_images: bool = True,
 ):
     story = ask_ai(
-        model="gpt-4o-mini",
+        model="gpt-4.1-nano",
         instructions=[
             f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
             "Include the child in the story also" if include_child else "No need to include the child in the story",
