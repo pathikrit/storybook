@@ -46,7 +46,7 @@ def story(
         generate_images: bool = True,
 ):
     story = ask_ai(
-        model="gpt-4.1-nano",
+        mode="text",
         instructions=[
             f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
             "Include the child in the story also" if include_child else "No need to include the child in the story",
@@ -65,7 +65,7 @@ def story(
 
     def make_image(prompt: str):
         return ask_ai(
-            model="dall-e-3",
+            mode="image",
             instructions=[f"Generate a Studio Ghibli style story book watercolor image for the given prompt"],
             prompt=prompt,
             response_format="b64_json",
@@ -74,7 +74,7 @@ def story(
 
     def make_audio():
         return ask_ai(
-            model="gpt-4o-mini-tts",
+            mode="tts",
             instructions=[
                 "Female, 30s, friendly, motherly, soft, slow, positive",
                 f"reading a {'soothing bedtime' if bedtime else 'exciting'} story to a {who}",

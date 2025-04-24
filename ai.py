@@ -1,5 +1,6 @@
 from openai import OpenAI
 from tenacity import retry, stop_after_attempt
+from typing import Literal
 
 from dotenv import load_dotenv
 
@@ -8,16 +9,16 @@ client = OpenAI()
 
 @retry(stop=stop_after_attempt(3))
 def ask_ai(
-        model: str,
+        mode: Literal["text", "tts", "image"],
         instructions: list[str],
         prompt: str,
         response_format=None,
         **kwargs
 ):
-    match model:
-        case "gpt-4o-mini" | "gpt-4.1-nano":
+    match mode:
+        case "text":
             response = client.beta.chat.completions.parse(
-                model=model,
+                model="gpt-4o-mini",
                 response_format=response_format,
                 messages=[
                     {"role": "system", "content": "\n".join(instructions)},
@@ -27,10 +28,10 @@ def ask_ai(
             )
             return response.choices[0].message.parsed
 
-        case "dall-e-2" | "dall-e-3":
+        case "image":
             instructions.append(prompt)
             response = client.images.generate(
-                model=model,
+                model="dall-e-3",
                 response_format=response_format,
                 prompt="\n".join(instructions),
                 **kwargs
@@ -39,9 +40,9 @@ def ask_ai(
             image.url = image.url or f"data:image/png;base64,{image.b64_json}"
             return image
 
-        case "gpt-4o-mini-tts":
+        case "tts":
             with client.audio.speech.with_streaming_response.create(
-                    model=model,
+                    model="gpt-4o-mini-tts",
                     instructions="\n".join(instructions),
                     input=prompt,
                     **kwargs
