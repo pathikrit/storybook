@@ -69,11 +69,14 @@ def story(
     def make_image(prompt: str):
         return ask_ai(
             mode="image",
-            instructions=[f"Generate a children's story book style watercolor image for the given prompt:"],
+            instructions=[
+                "Generate a children's storybook image for the given prompt",
+                "Also make sure, there are no texts in the generated image"
+            ],
             prompt=prompt,
             response_format="png",
             background="transparent",
-            quality="low",
+            quality="medium",
             size=f"{ImageTag.size}x{ImageTag.size}"
         )
 
