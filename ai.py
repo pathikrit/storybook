@@ -31,8 +31,8 @@ def ask_ai(
         case "image":
             instructions.append(prompt)
             response = client.images.generate(
-                model="dall-e-3",
-                response_format=response_format,
+                model="gpt-image-1",
+                output_format=response_format,
                 prompt="\n".join(instructions),
                 **kwargs
             )
@@ -50,4 +50,4 @@ def ask_ai(
                 return response.read()
 
         case _:
-            raise Exception(f"Unknown model: {model}")
+            raise Exception(f"Unknown mode: {mode}")

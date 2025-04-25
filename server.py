@@ -68,7 +68,9 @@ def story(
             mode="image",
             instructions=[f"Generate a Studio Ghibli style story book watercolor image for the given prompt"],
             prompt=prompt,
-            response_format="b64_json",
+            response_format="png",
+            background="transparent",
+            quality="low",
             size=f"{ImageTag.size}x{ImageTag.size}"
         )
 
