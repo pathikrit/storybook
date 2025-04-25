@@ -29,15 +29,15 @@ def ask_ai(
             return response.choices[0].message.parsed
 
         case "image":
-            instructions.append(prompt)
             response = client.images.generate(
                 model="gpt-image-1",
                 output_format=response_format,
-                prompt="\n".join(instructions),
+                prompt="\n".join(instructions + [prompt]),
                 **kwargs
             )
             image = response.data[0]
             image.url = image.url or f"data:image/png;base64,{image.b64_json}"
+            image.prompt = prompt
             return image
 
         case "tts":

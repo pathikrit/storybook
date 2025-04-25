@@ -16,7 +16,10 @@ from ai import ask_ai
 
 class ImageTag(BaseModel):
     id: int = Field(description="Image id starting from 1 - I will use this to replace the [[replace_image_X]] tags")
-    prompt: str = Field(description="The prompt for the image that I will feed to the image generation API")
+    prompt: str = Field(description="\n".join([
+        "The prompt for the image that I will feed to the image generation API",
+        "Must be detailed pertaining to location in the story wrt to the image tag id"
+    ]))
     size: ClassVar[int] = 1024
 
 
@@ -66,7 +69,7 @@ def story(
     def make_image(prompt: str):
         return ask_ai(
             mode="image",
-            instructions=[f"Generate a Studio Ghibli style story book watercolor image for the given prompt"],
+            instructions=[f"Generate a children's story book style watercolor image for the given prompt:"],
             prompt=prompt,
             response_format="png",
             background="transparent",
@@ -93,7 +96,7 @@ def story(
 
         if generate_images:
             for image in story.images:
-                task = lambda img=image: (make_image(prompt), img.id)
+                task = lambda img=image: (make_image(img.prompt), img.id)
                 parallel_tasks.append(executor.submit(task))
 
         if generate_audio:
@@ -106,7 +109,7 @@ def story(
                 case image, id:
                     story.html = story.html.replace(
                         f"<img src='[[replace_image_{id}]]' hidden>",
-                        f"<img src='{image.url}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
+                        f"<img src='{image.url}' alt='{image.prompt}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
                     )
                 case bytes() as audio:
                     audio_uri = f"data:audio/mp3;base64,{base64.b64encode(audio).decode('utf-8')}"
