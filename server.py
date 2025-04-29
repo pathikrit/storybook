@@ -4,6 +4,7 @@ from typing import List, ClassVar
 import re
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
+from collections import deque
 
 import uvicorn
 from fastapi import FastAPI
@@ -95,20 +96,22 @@ def story(
         )
 
     with ThreadPoolExecutor() as executor:
-        parallel_tasks = []
+        queue = deque()
+
+        def submit(job):
+            queue.append(executor.submit(job))
 
         if generate_images:
             for image in story.images:
-                task = lambda img=image: (make_image(img.prompt), img.id)
-                parallel_tasks.append(executor.submit(task))
+                submit(lambda img=image: (make_image(img.prompt), img.id))
 
         if generate_audio:
-            parallel_tasks.append(executor.submit(make_audio))
+            submit(make_audio)
         else:
             audio_uri = None
 
-        for task in parallel_tasks:
-            match task.result():
+        while queue:
+            match queue.popleft().result():
                 case image, id:
                     story.html = story.html.replace(
                         f"<img src='[[replace_image_{id}]]' hidden>",
