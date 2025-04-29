@@ -37,19 +37,22 @@ class Story(BaseModel):
     images: List[ImageTag] = Field(description="The images for the story")
 
     @classmethod
-    def generate(cls, prompt: str, who: str, bedtime: bool, include_child: bool):
+    def generate(cls, prompt: str, who: str, bedtime: bool, generate_images: bool, include_child: bool):
+        image_instr = [
+            "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
+            "<img src='[[replace_image_1]]' hidden>",
+            "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
+            "Every image prompt must include detailed descriptions of the story characters to allow similar character generation by AI"
+            "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images",
+            "Ideally, I would like one image at the start to set the scene for the story and one towards the end of the story concluding it",
+        ]
         story = ask_ai(
             mode="text",
             instructions=[
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
                 "Include the child in the story also" if include_child else "No need to include the child in the story",
                 "Return the story as html (which would go inside div)",
-                "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
-                "<img src='[[replace_image_1]]' hidden>",
-                "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
-                "Every image prompt must include detailed descriptions of the story characters to allow similar character generation by AI"
-                "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images",
-                "Ideally, I would like one image at the start to set the scene for the story and one towards the end of the story concluding it",
+                *(image_instr if generate_images else []),
                 "Always bring the story to a meaningful closure and end with 'THE END'"
             ],
             prompt=prompt,
@@ -76,5 +79,5 @@ class Story(BaseModel):
     def replace(self, id, image):
         self.html = self.html.replace(
             f"<img src='[[replace_image_{id}]]' hidden>",
-            f"<img src='{image.url}' alt='{image.prompt}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
+            f"<img src='{image.url}' alt='{image.alt_text}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
         )

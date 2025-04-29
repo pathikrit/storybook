@@ -27,7 +27,7 @@ def story(
         generate_audio: bool = True,
         generate_images: bool = True,
 ):
-    story, make_audio = Story.generate(prompt=prompt, who=who, bedtime=bedtime, include_child=include_child)
+    story, make_audio = Story.generate(prompt=prompt, who=who, bedtime=bedtime, generate_images=generate_images, include_child=include_child)
 
     with ThreadPoolExecutor() as executor:
         queue = deque()

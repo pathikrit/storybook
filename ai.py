@@ -47,7 +47,7 @@ def ask_ai(
             )
             image = response.data[0]
             image.url = image.url or f"data:image/png;base64,{image.b64_json}"
-            image.prompt = prompt
+            image.alt_text = prompt
             return image
 
         case "tts":
