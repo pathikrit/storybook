@@ -23,6 +23,21 @@ class ImageTag(BaseModel):
     ]))
     size: ClassVar[int] = 1024
 
+    def generate(self):
+        image = ask_ai(
+            mode="image",
+            instructions=[
+                "Generate a children's storybook image for the given prompt",
+                "Also make sure, there are no texts in the generated image"
+            ],
+            prompt=self.prompt,
+            response_format="png",
+            background="transparent",
+            quality="medium",
+            size=f"{ImageTag.size}x{ImageTag.size}"
+        )
+        return self.id, image
+
 
 class Story(BaseModel):
     file_name: str = Field(description="File name (without extension) to export this story to a html file")
@@ -67,20 +82,6 @@ def story(
         response_format=Story
     )
 
-    def make_image(prompt: str):
-        return ask_ai(
-            mode="image",
-            instructions=[
-                "Generate a children's storybook image for the given prompt",
-                "Also make sure, there are no texts in the generated image"
-            ],
-            prompt=prompt,
-            response_format="png",
-            background="transparent",
-            quality="medium",
-            size=f"{ImageTag.size}x{ImageTag.size}"
-        )
-
     def make_audio():
         return ask_ai(
             mode="tts",
@@ -103,7 +104,7 @@ def story(
 
         if generate_images:
             for image in story.images:
-                submit(lambda img=image: (make_image(img.prompt), img.id))
+                submit(image.generate)
 
         if generate_audio:
             submit(make_audio)
@@ -112,7 +113,7 @@ def story(
 
         while queue:
             match queue.popleft().result():
-                case image, id:
+                case id, image:
                     story.html = story.html.replace(
                         f"<img src='[[replace_image_{id}]]' hidden>",
                         f"<img src='{image.url}' alt='{image.prompt}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
