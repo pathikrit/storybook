@@ -45,6 +45,26 @@ class Story(BaseModel):
     html: str = Field(description="The story in HTML which would go inside a div (include the title)")
     images: List[ImageTag] = Field(description="The images for the story")
 
+    @classmethod
+    def generate(cls, prompt: str, who: str, bedtime: bool, include_child: bool):
+        return ask_ai(
+            mode="text",
+            instructions=[
+                f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
+                "Include the child in the story also" if include_child else "No need to include the child in the story",
+                "Return the story as html (which would go inside div)",
+                "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
+                "<img src='[[replace_image_1]]' hidden>",
+                "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
+                "Every image prompt must include detailed descriptions of the story characters to allow similar character generation by AI"
+                "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images",
+                "Ideally, I would like one image at the start to set the scene for the story and one towards the end of the story concluding it",
+                "Always bring the story to a meaningful closure and end with 'THE END'"
+            ],
+            prompt=prompt,
+            response_format=cls
+        )
+
 
 app = FastAPI()
 
@@ -64,23 +84,7 @@ def story(
         generate_audio: bool = True,
         generate_images: bool = True,
 ):
-    story = ask_ai(
-        mode="text",
-        instructions=[
-            f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
-            "Include the child in the story also" if include_child else "No need to include the child in the story",
-            "Return the story as html (which would go inside div)",
-            "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
-            "<img src='[[replace_image_1]]' hidden>",
-            "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
-            "Every image prompt must include detailed descriptions of the story characters to allow similar character generation by AI"
-            "I will use the [[replace_image_X]] to replace with the image urls from image generation API separately and unhide these images",
-            "Ideally, I would like one image at the start to set the scene for the story and one towards the end of the story concluding it",
-            "Always bring the story to a meaningful closure and end with 'THE END'"
-        ],
-        prompt=prompt,
-        response_format=Story
-    )
+    story = Story.generate(prompt=prompt, who=who, bedtime=bedtime, include_child=include_child)
 
     def make_audio():
         return ask_ai(
