@@ -15,6 +15,7 @@ DEFAULT_MODELS = {
     "tts": "gpt-4o-mini-tts",
 }
 
+
 @retry(stop=stop_after_attempt(3))
 def ask_ai(
         mode: Literal["text", "tts", "image"],
@@ -39,12 +40,23 @@ def ask_ai(
             return response.choices[0].message.parsed
 
         case "image":
-            response = client.images.generate(
-                model=model,
-                output_format=response_format,
-                prompt="\n".join(instructions + [prompt]),
-                **kwargs
-            )
+            images = kwargs.pop("images")
+            prompt = "\n".join(instructions + [prompt])
+            if images:
+                kwargs.pop("background")  # not supported for edits
+                response = client.images.edit(
+                    model=model,
+                    image=images,
+                    prompt=prompt,
+                    **kwargs
+                )
+            else:
+                response = client.images.generate(
+                    model=model,
+                    output_format=response_format,
+                    prompt=prompt,
+                    **kwargs
+                )
             image = response.data[0]
             image.url = image.url or f"data:image/png;base64,{image.b64_json}"
             image.alt_text = prompt

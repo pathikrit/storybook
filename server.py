@@ -1,4 +1,7 @@
 import os
+import base64
+import re
+import io
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from collections import deque
@@ -31,13 +34,13 @@ def story(
 
     with ThreadPoolExecutor() as executor:
         queue = deque()
+        base_image = None
 
         def submit(job):
             queue.append(executor.submit(job))
 
-        if generate_images:
-            for image in story.images:
-                submit(image.generate)
+        if generate_images and story.images:
+            submit(story.images[0].generate)
 
         if generate_audio:
             submit(make_audio)
@@ -48,6 +51,10 @@ def story(
             match queue.popleft().result():
                 case id, image:
                     story.replace(id, image)
+                    if not base_image:
+                        base_image = data_uri_to_file(data_uri=image.url, file_name="base_image")
+                        for image in story.images[1:]:
+                            submit(lambda img=image: img.generate(base_image=base_image))
                 case uri:
                     audio_uri = uri
 
@@ -57,6 +64,16 @@ def story(
         "story": story.html,
         "audio_uri": audio_uri
     }
+
+
+def data_uri_to_file(data_uri: str, file_name: str = "upload"):
+    header, b64data = data_uri.split(",", 1)
+    ext = re.search(r"data:image/(\w+);base64", header).group(1)
+    data = base64.b64decode(b64data)
+    buffer = io.BytesIO(data)
+    buffer.name = f"{file_name}.{ext}"
+    buffer.seek(0)
+    return buffer
 
 
 if os.environ.get("RENDER"):

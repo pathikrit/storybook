@@ -14,16 +14,18 @@ class ImageTag(BaseModel):
     ]))
     size: ClassVar[int] = 1024
 
-    def generate(self):
+    def generate(self, base_image=None):
         image = ask_ai(
             mode="image",
             instructions=[
                 "Generate a children's storybook image for the given prompt",
-                "Also make sure, there are no texts in the generated image"
+                "Use the provided base image as template to make sure to keep the same characters and style" if base_image else "",
+                "Make sure that there are no texts in the generated image",
             ],
             prompt=self.prompt,
             response_format="png",
             background="transparent",
+            images=[base_image] if base_image else None,
             quality="medium",
             size=f"{ImageTag.size}x{ImageTag.size}"
         )
@@ -39,7 +41,7 @@ class Story(BaseModel):
     @classmethod
     def generate(cls, prompt: str, who: str, bedtime: bool, generate_images: bool, include_child: bool):
         image_instr = [
-            "Also include placeholder image tags (1-2) inside the text at appropriate locations follows:",
+            "Also include placeholder image tags (2-3) inside the text at appropriate locations as follows:",
             "<img src='[[replace_image_1]]' hidden>",
             "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
             "Every image prompt must include detailed descriptions of the story characters to allow similar character generation by AI"
