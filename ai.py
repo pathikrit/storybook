@@ -2,11 +2,10 @@ import base64
 from typing import Literal
 
 from openai import OpenAI
-from tenacity import retry, stop_after_attempt
+from tenacity import retry, stop_after_attempt, RetryCallState
 
-from dotenv import load_dotenv
+from common import log
 
-load_dotenv()
 client = OpenAI()
 
 DEFAULT_MODELS = {
@@ -16,7 +15,11 @@ DEFAULT_MODELS = {
 }
 
 
-@retry(stop=stop_after_attempt(3))
+def on_retry(retry_state: RetryCallState):
+    log.error(f"Retry #{retry_state.attempt_number}: {retry_state.outcome.exception()!r}")
+
+
+@retry(stop=stop_after_attempt(3), before_sleep=on_retry)
 def ask_ai(
         mode: Literal["text", "tts", "image"],
         instructions: list[str],
@@ -24,7 +27,8 @@ def ask_ai(
         response_format=None,
         **kwargs
 ):
-    print(f"{mode}: {instructions + [prompt]}")
+    log.debug(f"{mode}: {instructions + [prompt]}")
+
     model = kwargs.pop("model", DEFAULT_MODELS[mode])
     match mode:
         case "text":

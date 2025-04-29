@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
 from models import Story
+from common import log
 
 app = FastAPI()
 
@@ -30,6 +31,7 @@ def story(
         generate_audio: bool = True,
         generate_images: bool = True,
 ):
+    log.info(f"{who}: {prompt} ({bedtime=}, {include_child=}, {generate_audio=}, {generate_images=})")
     story, make_audio = Story.generate(prompt=prompt, who=who, bedtime=bedtime, generate_images=generate_images, include_child=include_child)
 
     with ThreadPoolExecutor() as executor:
