@@ -72,3 +72,9 @@ class Story(BaseModel):
             )
 
         return story, audio_generator
+
+    def replace(self, id, image):
+        self.html = self.html.replace(
+            f"<img src='[[replace_image_{id}]]' hidden>",
+            f"<img src='{image.url}' alt='{image.prompt}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
+        )

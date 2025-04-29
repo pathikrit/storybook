@@ -47,10 +47,7 @@ def story(
         while queue:
             match queue.popleft().result():
                 case id, image:
-                    story.html = story.html.replace(
-                        f"<img src='[[replace_image_{id}]]' hidden>",
-                        f"<img src='{image.url}' alt='{image.prompt}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
-                    )
+                    story.replace(id, image)
                 case uri:
                     audio_uri = uri
 
