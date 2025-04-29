@@ -47,7 +47,7 @@ class Story(BaseModel):
 
     @classmethod
     def generate(cls, prompt: str, who: str, bedtime: bool, include_child: bool):
-        return ask_ai(
+        story = ask_ai(
             mode="text",
             instructions=[
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
@@ -64,6 +64,22 @@ class Story(BaseModel):
             prompt=prompt,
             response_format=cls
         )
+
+        def audio_generator():
+            return ask_ai(
+                mode="tts",
+                instructions=[
+                    "Female, 30s, friendly, motherly, soft, slow, positive",
+                    f"reading a {'soothing bedtime' if bedtime else 'exciting'} story to a {who}",
+                    "speak slowly as if lulling a child to sleep" if bedtime else "show excitement in your voice; try to engage the child",
+                    "Easy and clear pronunciation for a child to understand"
+                ],
+                prompt=re.sub(r"<.*?>", '', story.html),  # strip html tags
+                voice="coral",
+                speed=0.8 if bedtime else 0.9,  # slower speed for kids
+            )
+
+        return story, audio_generator
 
 
 app = FastAPI()
@@ -84,21 +100,7 @@ def story(
         generate_audio: bool = True,
         generate_images: bool = True,
 ):
-    story = Story.generate(prompt=prompt, who=who, bedtime=bedtime, include_child=include_child)
-
-    def make_audio():
-        return ask_ai(
-            mode="tts",
-            instructions=[
-                "Female, 30s, friendly, motherly, soft, slow, positive",
-                f"reading a {'soothing bedtime' if bedtime else 'exciting'} story to a {who}",
-                "speak slowly as if lulling a child to sleep" if bedtime else "show excitement in your voice; try to engage the child",
-                "Easy and clear pronunciation for a child to understand"
-            ],
-            prompt=re.sub(r"<.*?>", '', story.html),  # strip html tags
-            voice="coral",
-            speed=0.8 if bedtime else 0.9,  # slower speed for kids
-        )
+    story, make_audio = Story.generate(prompt=prompt, who=who, bedtime=bedtime, include_child=include_child)
 
     with ThreadPoolExecutor() as executor:
         queue = deque()
