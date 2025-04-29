@@ -15,6 +15,7 @@ def ask_ai(
         response_format=None,
         **kwargs
 ):
+    print(f"{mode}: {instructions + [prompt]}")
     match mode:
         case "text":
             response = client.beta.chat.completions.parse(
