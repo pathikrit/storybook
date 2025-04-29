@@ -1,4 +1,3 @@
-import base64
 import os
 from typing import List, ClassVar
 import re
@@ -77,6 +76,7 @@ class Story(BaseModel):
                 prompt=re.sub(r"<.*?>", '', story.html),  # strip html tags
                 voice="coral",
                 speed=0.8 if bedtime else 0.9,  # slower speed for kids
+                response_format="b64_uri"
             )
 
         return story, audio_generator
@@ -124,8 +124,8 @@ def story(
                         f"<img src='[[replace_image_{id}]]' hidden>",
                         f"<img src='{image.url}' alt='{image.prompt}' style='max-width: 100%; height: auto; display: block; margin: auto;'>",
                     )
-                case bytes() as audio:
-                    audio_uri = f"data:audio/mp3;base64,{base64.b64encode(audio).decode('utf-8')}"
+                case uri:
+                    audio_uri = uri
 
     return {
         "file_name": f"story_{story.file_name.lower()}.html",
