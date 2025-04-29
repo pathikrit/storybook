@@ -30,8 +30,9 @@ def story(
         include_child: bool = True,
         generate_audio: bool = True,
         generate_images: bool = True,
+        maintain_image_style: bool = False,
 ):
-    log.info(f"{who}: {prompt} ({bedtime=}, {include_child=}, {generate_audio=}, {generate_images=})")
+    log.info(f"{who}: {prompt} ({bedtime=}, {include_child=}, {generate_audio=}, {generate_images=}, {maintain_image_style=})")
     story, make_audio = Story.generate(prompt=prompt, who=who, bedtime=bedtime, generate_images=generate_images, include_child=include_child)
 
     with ThreadPoolExecutor() as executor:
@@ -42,7 +43,8 @@ def story(
             queue.append(executor.submit(job))
 
         if generate_images and story.images:
-            submit(story.images[0].generate)
+            for image in story.images[0:1 if maintain_image_style else None]:
+                submit(image.generate)
 
         if generate_audio:
             submit(make_audio)
@@ -53,7 +55,7 @@ def story(
             match queue.popleft().result():
                 case id, image:
                     story.replace(id, image)
-                    if not base_image:
+                    if maintain_image_style and not base_image:
                         base_image = data_uri_to_file(data_uri=image.url, file_name="base_image")
                         for image in story.images[1:]:
                             submit(lambda img=image: img.generate(base_image=base_image))

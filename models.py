@@ -41,7 +41,7 @@ class Story(BaseModel):
     @classmethod
     def generate(cls, prompt: str, who: str, bedtime: bool, generate_images: bool, include_child: bool):
         image_instr = [
-            "Also include placeholder image tags (2-3) inside the text at appropriate locations as follows:",
+            "Also include two placeholder image tags inside the text at appropriate locations as follows:",
             "<img src='[[replace_image_1]]' hidden>",
             "Return these tags separately with a short prompt (appropriate for the section in the story) that I would use an AI to generate the images",
             "Every image prompt must include detailed descriptions of the story characters to allow similar character generation by AI"
