@@ -9,6 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 client = OpenAI()
 
+DEFAULT_MODELS = {
+    "text": "gpt-4o-mini",
+    "image": "gpt-image-1",
+    "tts": "gpt-4o-mini-tts",
+}
 
 @retry(stop=stop_after_attempt(3))
 def ask_ai(
@@ -19,10 +24,11 @@ def ask_ai(
         **kwargs
 ):
     print(f"{mode}: {instructions + [prompt]}")
+    model = kwargs.pop("model", DEFAULT_MODELS[mode])
     match mode:
         case "text":
             response = client.beta.chat.completions.parse(
-                model="gpt-4o-mini",
+                model=model,
                 response_format=response_format,
                 messages=[
                     {"role": "system", "content": "\n".join(instructions)},
@@ -34,7 +40,7 @@ def ask_ai(
 
         case "image":
             response = client.images.generate(
-                model="gpt-image-1",
+                model=model,
                 output_format=response_format,
                 prompt="\n".join(instructions + [prompt]),
                 **kwargs
@@ -46,7 +52,7 @@ def ask_ai(
 
         case "tts":
             with client.audio.speech.with_streaming_response.create(
-                    model="gpt-4o-mini-tts",
+                    model=model,
                     instructions="\n".join(instructions),
                     input=prompt,
                     **kwargs
