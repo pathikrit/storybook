@@ -1,5 +1,5 @@
-from typing import List, ClassVar
 import re
+from typing import List, ClassVar
 
 from pydantic import BaseModel, Field
 

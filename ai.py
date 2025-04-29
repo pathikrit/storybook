@@ -44,9 +44,8 @@ def ask_ai(
             return response.choices[0].message.parsed
 
         case "image":
-            images = kwargs.pop("images")
             prompt = "\n".join(instructions + [prompt])
-            if images:
+            if images := kwargs.pop("images"):
                 kwargs.pop("background")  # not supported for edits
                 response = client.images.edit(
                     model=model,
