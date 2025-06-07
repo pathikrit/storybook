@@ -18,7 +18,7 @@ class ImageTag(BaseModel):
         image = ask_ai(
             mode="image",
             instructions=[
-                "Generate a children's storybook image for the given prompt",
+                "Generate a Studio Ghibli style children's storybook image for the given prompt",
                 "Use the provided base image as template to make sure to keep the same characters and style" if base_image else "",
                 "Make sure that there are no texts in the generated image",
             ],
@@ -52,9 +52,11 @@ class Story(BaseModel):
             mode="text",
             instructions=[
                 f"Generate a imaginative and creative {'bedtime' if bedtime else 'and engaging'} story for {who}",
+                "In the story, describe the places, characters and events in vivid detail to drive the child's imagination",
                 "Include the child in the story also" if include_child else "No need to include the child in the story",
                 "Return the story as html (which would go inside div)",
                 *(image_instr if generate_images else []),
+                "Make the story long - atleast 2000 words or 10000 characters",
                 "Always bring the story to a meaningful closure and end with 'THE END'"
             ],
             prompt=prompt,
