@@ -9,7 +9,7 @@ from common import log
 client = OpenAI()
 
 DEFAULT_MODELS = {
-    "text": "gpt-4o-mini",
+    "text": "gpt-5-nano-2025-08-07",
     "image": "gpt-image-1",
     "tts": "gpt-4o-mini-tts",
 }
